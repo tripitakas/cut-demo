@@ -1,0 +1,20 @@
+body {
+    font-size: 14px;
+    margin: 0;
+    padding: 0;
+}
+
+.cut-area {
+    padding-top: 80px;
+    padding-left: 10%;
+    margin-bottom: 40px;
+}
+
+.cut-area .buttons {
+    padding-left: 4px;
+    margin-bottom: 10px;
+}
+
+#holder {
+    cursor: crosshair;
+}
