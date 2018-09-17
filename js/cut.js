@@ -77,9 +77,9 @@
   }
 
   // 根据两个对角点创建字框图形，要求字框的宽高都不小于5
-  function createRect(pt1, pt2) {
+  function createRect(pt1, pt2, force) {
     var width = Math.abs(pt1.x - pt2.x), height = Math.abs(pt1.y - pt2.y);
-    if (width >= 5 && height >= 5) {
+    if (width >= 5 && height >= 5 || force) {
       var x = Math.min(pt1.x, pt2.x), y = Math.min(pt1.y, pt2.y);
       return data.paper.rect(x, y, width, height)
         .initZoom().setAttr({
@@ -218,8 +218,8 @@
 
       var mouseDown = function(e) {
         e.preventDefault();
-        hover.down = hover.box && getPoint(e);
-        if (hover.down) {
+        hover.down = getPoint(e);
+        if (hover.box) {
           hover.edit = hover.box;
           hover.strokeBeforeEdit = hover.stroke;
           activateHandle(hover.edit, hover.down);
@@ -227,8 +227,14 @@
           if (hover.activeHandle >= 0) {
             hover.down = getHandle(hover.edit, hover.activeHandle);
           } else {
-            // TODO: create box
+            hover.edit = null;    // for hoverOut
+            hoverOut(hover.box);
+            hover.box = null;
           }
+        }
+        if (!hover.box) {
+          hover.activeHandle = 2;  // 右下角
+          hover.edit = createRect(hover.down, hover.down, true);
         }
       };
 
@@ -255,12 +261,20 @@
         if (hover.edit) {
           var pt = getPoint(e);
           if (hover.originBox && getDistance(pt, hover.down) > 1) {
-            var cid = hover.originBox.data('cid');
-            var char = hover.originBox.data('char');
             var box = hover.edit;
+            var info = self.findCharById(hover.originBox.data('cid')) || {};
 
-            box.data('cid', cid).data('char', char);
-            self.findCharById(cid).shape = box;
+            if (!info.char_id) {
+              for (var i = 1; i < 999; i++) {
+                info.char_id = 'new' + i;
+                if (!self.findCharById(info.char_id)) {
+                  data.chars.push(info);
+                  break;
+                }
+              }
+            }
+            box.data('cid', info.char_id).data('char', box.ch);
+            info.shape = box;
 
             box.insertBefore(hover.originBox);
             hover.originBox.remove();
@@ -347,13 +361,16 @@
           hover.edit.attr('opacity', 1);
           delete hover.originBox;
         }
-        if (hover.edit) {
+        if (hover.edit && hover.edit.getBBox().width < 1) {
+          hover.edit.remove();
+        }
+        else if (hover.edit) {
           hover.edit.attr({
             stroke: rgb_a(hover.strokeBeforeEdit, data.boxOpacity),
             fill: data.boxFill
           });
-          hover.edit = null;
         }
+        hover.edit = null;
         hover.down = null;
       }
     },
