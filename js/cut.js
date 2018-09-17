@@ -123,6 +123,7 @@
     edit: null,             // 正拖拽的字框
     originBox: null,        // 改动前的字框
     strokeBeforeEdit: 0,    // 拖拽字框原来的线色
+    fillBeforeEdit: 0,      // 拖拽字框原来的填充色
     handles: [],            // 字框的控制点框
     activeHandle: -1        // 当前拖动的手柄框序号
   };
@@ -183,10 +184,7 @@
 
     hoverOut: function(box) {
       if (box && !hover.edit && hover.box === box && hover.fill) {
-        box.attr({
-          stroke: rgb_a(hover.stroke, data.boxOpacity),
-          fill: data.boxFill
-        });
+        box.attr({ stroke: hover.stroke, fill: hover.fill });
         hover.fill = 0;   // 设置此标志，暂不清除 box 变量，以便在框外也可点控制点
       }
     },
@@ -223,6 +221,7 @@
         if (hover.box) {
           hover.edit = hover.box;
           hover.strokeBeforeEdit = hover.stroke;
+          hover.fillBeforeEdit = hover.fill;
           self.activateHandle(hover.edit, hover.down);
 
           if (hover.activeHandle >= 0) {
@@ -376,8 +375,8 @@
         }
         else if (hover.edit) {
           hover.edit.attr({
-            stroke: rgb_a(hover.strokeBeforeEdit, data.boxOpacity),
-            fill: data.boxFill
+            stroke: hover.strokeBeforeEdit,
+            fill: hover.fillBeforeEdit
           });
         }
         hover.edit = null;
@@ -416,7 +415,7 @@
           // 优先找中心Y坐标离得近的，其次找X方向离得近的
           var rowUnit = Math.max(unit, box.width / 2);
           return Math.abs(box.y + box.height / 2 - cur.y - cur.height / 2) +
-            Math.floor(Math.abs(box.x + box.width / 2 - cur.x - cur.width / 2) / unit) * 10;
+            Math.floor(Math.abs(box.x + box.width / 2 - cur.x - cur.width / 2) / rowUnit) * 10;
         };
       }
       else {
@@ -432,6 +431,7 @@
         };
       }
 
+      // 找加权距离最近的字框
       for (i = 0; i < chars.length; i++) {
         d = calc(chars[i].shape.getBBox());
         if (minDist > d) {
