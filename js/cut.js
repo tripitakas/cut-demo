@@ -130,72 +130,72 @@
     data: data,
     hover: hover,
 
+    showHandles: function(el) {
+      var i, pt, r;
+      var size = data.handleSize * ((data.ratio - 1) * 0.4 + 1);
+
+      for (i = 0; i < hover.handles.length; i++) {
+        hover.handles[i].remove();
+      }
+      hover.handles.length = 0;
+
+      if (el) {
+        for (i = 0; i < 8; i++) {
+          pt = getHandle(el, i);
+          r = data.paper.rect(pt.x - size, pt.y - size, size * 2, size * 2)
+            .attr({
+              stroke: i === hover.activeHandle ? data.activeHandleColor : data.hoverColor,
+              fill: i === hover.activeHandle ? rgb_a(data.activeHandleFill, .8) : rgb_a(data.handleFill, .4)
+            });
+          hover.handles.push(r);
+        }
+      }
+    },
+
+    activateHandle: function(el, pt) {
+      var dist = hover.fill ? 20 : 8;
+      var d, i;
+
+      hover.activeHandle = -1;
+      for (i = el ? 7 : -1; i >= 0; i--) {
+        d = getDistance(pt, getHandle(el, i));
+        if (dist > d) {
+          dist = d;
+          hover.activeHandle = i;
+        }
+      }
+      this.showHandles(el);
+    },
+
+    hoverIn: function(box) {
+      if (box && !hover.edit) {
+        hover.box = box;
+        hover.activeHandle = -1;
+        hover.stroke = box.attr('stroke');
+        hover.fill = box.attr('fill');
+        box.attr({
+          stroke: rgb_a(data.hoverColor, data.boxOpacity),
+          fill: rgb_a(data.hoverFill, .1)
+        });
+      }
+    },
+
+    hoverOut: function(box) {
+      if (box && !hover.edit && hover.box === box && hover.fill) {
+        box.attr({
+          stroke: rgb_a(hover.stroke, data.boxOpacity),
+          fill: data.boxFill
+        });
+        hover.fill = 0;   // 设置此标志，暂不清除 box 变量，以便在框外也可点控制点
+      }
+    },
+
     create: function(p) {
       var self = this;
-
-      var showHandles = function(el) {
-        var i, pt, r;
-        var size = data.handleSize * ((data.ratio - 1) * 0.4 + 1);
-
-        for (i = 0; i < hover.handles.length; i++) {
-          hover.handles[i].remove();
-        }
-        hover.handles.length = 0;
-
-        if (el) {
-          for (i = 0; i < 8; i++) {
-            pt = getHandle(el, i);
-            r = data.paper.rect(pt.x - size, pt.y - size, size * 2, size * 2)
-              .attr({
-                stroke: i === hover.activeHandle ? data.activeHandleColor : data.hoverColor,
-                fill: i === hover.activeHandle ? rgb_a(data.activeHandleFill, .8) : rgb_a(data.handleFill, .4)
-              });
-            hover.handles.push(r);
-          }
-        }
-      };
-
-      var activateHandle = function(el, pt) {
-        var dist = hover.fill ? 20 : 8;
-        var d, i;
-
-        hover.activeHandle = -1;
-        for (i = el ? 7 : -1; i >= 0; i--) {
-          d = getDistance(pt, getHandle(el, i));
-          if (dist > d) {
-            dist = d;
-            hover.activeHandle = i;
-          }
-        }
-        showHandles(el);
-      };
 
       var getPoint = function(e) {
         var box = document.getElementById(p.holder).getBoundingClientRect();
         return { x: e.clientX - box.x, y: e.clientY - box.y };
-      };
-
-      var hoverIn = function(box) {
-        if (box && !hover.edit) {
-          hover.box = box;
-          hover.activeHandle = -1;
-          hover.stroke = box.attr('stroke');
-          hover.fill = box.attr('fill');
-          box.attr({
-            stroke: rgb_a(data.hoverColor, data.boxOpacity),
-            fill: rgb_a(data.hoverFill, .1)
-          });
-        }
-      };
-
-      var hoverOut = function(box) {
-        if (box && !hover.edit && hover.box === box && hover.fill) {
-          box.attr({
-            stroke: rgb_a(hover.stroke, data.boxOpacity),
-            fill: data.boxFill
-          });
-          hover.fill = 0;   // 设置此标志，暂不清除 box 变量，以便在框外也可点控制点
-        }
       };
 
       var mouseHover = function(e) {
@@ -203,15 +203,15 @@
         var box = self.findBoxByPoint(pt);
 
         if (hover.box !== box) {
-          hoverOut(hover.box);
-          hoverIn(box);
+          self.hoverOut(hover.box);
+          self.hoverIn(box);
         }
-        activateHandle(hover.box, pt);
+        self.activateHandle(hover.box, pt);
 
         if (hover.box && !hover.fill && hover.activeHandle < 0) {
-          hoverOut(hover.box);
+          self.hoverOut(hover.box);
           hover.box = null;
-          showHandles();
+          self.showHandles();
         }
         e.preventDefault();
       };
@@ -222,13 +222,13 @@
         if (hover.box) {
           hover.edit = hover.box;
           hover.strokeBeforeEdit = hover.stroke;
-          activateHandle(hover.edit, hover.down);
+          self.activateHandle(hover.edit, hover.down);
 
           if (hover.activeHandle >= 0) {
             hover.down = getHandle(hover.edit, hover.activeHandle);
           } else {
             hover.edit = null;    // for hoverOut
-            hoverOut(hover.box);
+            self.hoverOut(hover.box);
             hover.box = null;
           }
         }
@@ -252,7 +252,7 @@
           }
           hover.edit = box;
         }
-        showHandles(hover.edit);
+        self.showHandles(hover.edit);
         e.preventDefault();
       };
 
@@ -280,8 +280,8 @@
             hover.originBox.remove();
             hover.originBox = null;
             hover.edit = hover.down = null;
-            hoverIn(box);
-            showHandles(box);
+            self.hoverIn(box);
+            self.showHandles(box);
           }
           else {
             self.cancelDrag();
@@ -342,7 +342,7 @@
       }
       for (i = 0; i < data.chars.length; i++) {
         el = data.chars[i].shape;
-        if (isInRect(el, 5)) {
+        if (el && isInRect(el, 5)) {
           d = getDistance(pt, getHandle(el));
           if (dist > d) {
             dist = d;
@@ -375,9 +375,23 @@
       }
     },
 
+    removeBox: function() {
+      this.cancelDrag();
+      if (hover.box) {
+        var info = this.findCharById(hover.box.data('cid'));
+        info.shape = null;
+        hover.box.remove();
+        hover.box = null;
+        this.showHandles();
+        return info.char_id;
+      }
+    },
+
     toggleBox: function(visible) {
       data.chars.forEach(function(box) {
-        $(box.shape.node).toggle(visible);
+        if (box.shape) {
+          $(box.shape.node).toggle(visible);
+        }
       });
     },
 

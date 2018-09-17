@@ -65,6 +65,11 @@
     $('#switchBox').click(function() {
       $.cut.toggleBox();
     });
+    $(document).keydown(function(e) {
+      if (e.keyCode === 8) {
+        console.log($.cut.removeBox());
+      }
+    });
   });
 </script>
 
