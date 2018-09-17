@@ -85,7 +85,7 @@
         .initZoom().setAttr({
           stroke: rgb_a(data.changedColor, data.boxOpacity),
           'stroke-width': 1.5,
-          fill: data.boxFill
+          fill: rgb_a(data.hoverFill, .15)
         });
     }
   }
@@ -100,7 +100,7 @@
     normalColor: '#af82e4',                   // 正常字框的线色
     changedColor: '#e44349',                  // 改动字框的线色
     hoverColor: '#e42d81',                    // 掠过时的字框线色
-    hoverFill: '#e474d3',                     // 掠过时的字框填充色
+    hoverFill: '#ff0000',                     // 掠过时的字框填充色
     handleColor: '#e3e459',                   // 字框控制点的线色
     handleFill: '#ffffff',                    // 字框控制点的填充色
     activeHandleColor: '#72141d',             // 活动控制点的线色
@@ -176,7 +176,7 @@
         hover.fill = box.attr('fill');
         box.attr({
           stroke: rgb_a(data.hoverColor, data.boxOpacity),
-          fill: rgb_a(data.hoverFill, .1)
+          fill: rgb_a(data.hoverFill, .2)
         });
       }
     },
