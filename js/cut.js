@@ -398,6 +398,55 @@
     },
 
     navigate: function(direction) {
+      var i, cur, chars, calc, unit, invalid = 1e5;
+      var minDist = invalid, d, ret;
+
+      chars = data.chars.filter(function(c) { return c.shape; });
+      ret = cur = hover.box || (chars[chars.length - 1] || {}).shape;
+      cur = cur && cur.getBBox();
+
+      if (direction === 'left' || direction === 'right') {
+        unit = Math.min(cur.width / 2, 10);
+        calc = function(box) {
+          // left：待测框的左侧不在当前框左边，则跳过；right：待测框的右侧不在当前框右边，则跳过
+          if (direction === 'left' ? (box.x > cur.x - unit)
+              : (box.x + box.width < cur.x + cur.width + unit)) {
+            return invalid;
+          }
+          // 优先找中心Y坐标离得近的，其次找X方向离得近的
+          var rowUnit = Math.max(unit, box.width / 2);
+          return Math.abs(box.y + box.height / 2 - cur.y - cur.height / 2) +
+            Math.floor(Math.abs(box.x + box.width / 2 - cur.x - cur.width / 2) / unit) * 10;
+        };
+      }
+      else {
+        unit = Math.min(cur.height / 2, 10);
+        calc = function(box) {
+          if (direction === 'up' ? (box.y > cur.y - unit)
+              : (box.y + box.height < cur.y + cur.height + unit)) {
+            return invalid;
+          }
+          var colUnit = Math.max(unit, box.height / 2);
+          return Math.abs(box.x + box.width / 2 - cur.x - cur.width / 2) +
+            Math.floor(Math.abs(box.y + box.height / 2 - cur.y - cur.height / 2) / colUnit) * 10;
+        };
+      }
+
+      for (i = 0; i < chars.length; i++) {
+        d = calc(chars[i].shape.getBBox());
+        if (minDist > d) {
+          minDist = d;
+          ret = chars[i].shape;
+        }
+      }
+
+      if (ret) {
+        this.cancelDrag();
+        this.hoverOut(hover.box);
+        this.hoverIn(ret);
+        this.showHandles(ret);
+        return ret.data('cid');
+      }
     },
 
     moveBox: function(direction) {
