@@ -7,6 +7,7 @@
     return Math.sqrt(cx * cx + cy * cy);
   }
 
+  // 得到字框矩形的控制点坐标
   function getHandle(el, index) {
     var box = el.getBBox();
     var pt;
@@ -47,6 +48,7 @@
     return {x: pt[0], y: pt[1]};
   }
 
+  // 移动字框矩形的控制点，生成新的矩形
   function setHandle(el, index, pt) {
     var pts = [0, 0, 0, 0];
 
@@ -79,10 +81,16 @@
     var width = Math.abs(pt1.x - pt2.x), height = Math.abs(pt1.y - pt2.y);
     if (width >= 5 && height >= 5) {
       var x = Math.min(pt1.x, pt2.x), y = Math.min(pt1.y, pt2.y);
-      return data.paper.rect(x, y, width, height);
+      return data.paper.rect(x, y, width, height)
+        .initZoom().setAttr({
+          stroke: rgb_a(data.changedColor, data.boxOpacity),
+          'stroke-width': 1.5,
+          fill: data.boxFill
+        });
     }
   }
 
+  // 将RGB颜色串(例如 #00ff00)与透明度合并为rgba颜色串
   function rgb_a(rgb, a) {
     var c = Raphael.color(rgb);
     return 'rgba(' + [c.r, c.g, c.b, a].join(',') + ')';
@@ -99,29 +107,31 @@
     activeHandleFill: '#0000ff',              // 活动控制点的填充色
     handleSize: 2,                            // 字框控制点的半宽
     boxFill: 'rgba(0, 0, 0, .01)',            // 默认的字框填充色，不能全透明
+    boxOpacity: .7,                           // 字框线半透明度
     ratio: 1,               // 缩放比例
     paper: null,            // Raphael 画布
     image: null,            // 背景图
     chars: []               // OCR识别出的字框
   };
+
+  var hover = {
+    box: null,              // 掠过的字框
+    stroke: 0,              // 字框原来的线色
+    fill: 0,                // 字框原来的填充色，鼠标离开框后变为0
+    down: null,             // 按下的坐标，未按下时为假
+    edit: null,             // 正拖曳的字框
+    originBox: null,        // 改动前的字框
+    strokeBeforeEdit: 0,    // 拖曳字框原来的线色
+    handles: [],            // 字框的控制点框
+    activeHandle: -1        // 当前拖动的手柄框序号
+  };
   
   $.cut = {
     data: data,
-    hover: {
-      box: null,            // 掠过的字框
-      stroke: 0,            // 字框原来的线色
-      fill: 0,              // 字框原来的填充色，鼠标离开框后变为0
-      down: null,           // 按下的坐标，未按下时为假
-      edit: null,           // 正拖曳的字框
-      originBox: null,      // 改动前的字框
-      strokeBeforeEdit: 0,  // 拖曳字框原来的线色
-      handles: [],          // 字框的控制点框
-      activeHandle: -1      // 当前拖动的手柄框序号
-    },
+    hover: hover,
 
     create: function(p) {
       var self = this;
-      var hover = this.hover;
 
       var showHandles = function(el) {
         var i, pt, r;
@@ -172,7 +182,7 @@
           hover.stroke = box.attr('stroke');
           hover.fill = box.attr('fill');
           box.attr({
-            stroke: rgb_a(data.hoverColor, .7),
+            stroke: rgb_a(data.hoverColor, data.boxOpacity),
             fill: rgb_a(data.hoverFill, .1)
           });
         }
@@ -181,7 +191,7 @@
       var hoverOut = function(box) {
         if (box && !hover.edit && hover.box === box && hover.fill) {
           box.attr({
-            stroke: rgb_a(hover.stroke, .7),
+            stroke: rgb_a(hover.stroke, data.boxOpacity),
             fill: data.boxFill
           });
           hover.fill = 0;   // 设置此标志，暂不清除 box 变量，以便在框外也可点控制点
@@ -199,7 +209,7 @@
         activateHandle(hover.box, pt);
 
         if (hover.box && !hover.fill && hover.activeHandle < 0) {
-          hoverOut(hover.box)
+          hoverOut(hover.box);
           hover.box = null;
           showHandles();
         }
@@ -227,14 +237,10 @@
         var box = setHandle(hover.originBox || hover.edit, hover.activeHandle, pt);
 
         if (box) {
-          box.initZoom().setAttr({
-            stroke: rgb_a(data.changedColor, .7),
-            'stroke-width': 1.5,
-            fill: data.boxFill
-          });
+          // 刚开始改动，记下原来的图框并变暗，改完将删除，或放弃改动时(cancelDrag)恢复属性
           if (!hover.originBox) {
             hover.originBox = hover.edit;
-            hover.originBox.attr({stroke: 'rgba(0, 255, 0, .8)'});
+            hover.originBox.attr({stroke: 'rgba(0, 255, 0, .8)', 'opacity': .5});
           } else {
             hover.edit.remove();
           }
@@ -250,14 +256,17 @@
           var pt = getPoint(e);
           if (hover.originBox && getDistance(pt, hover.down) > 1) {
             var cid = hover.originBox.data('cid');
+            var char = hover.originBox.data('char');
             var box = hover.edit;
-            box.data('cid', cid).data('char', hover.originBox.data('char'));
 
+            box.data('cid', cid).data('char', char);
             self.findCharById(cid).shape = box;
+
             box.insertBefore(hover.originBox);
             hover.originBox.remove();
             hover.originBox = null;
             hover.edit = hover.down = null;
+            hoverIn(box);
             showHandles(box);
           }
           else {
@@ -282,7 +291,7 @@
       p.chars.forEach(function(box) {
         box.shape = data.paper.rect(box.x, box.y, box.w, box.h)
           .attr({
-            stroke: rgb_a(data.normalColor, .7),
+            stroke: rgb_a(data.normalColor, data.boxOpacity),
             'stroke-width': 1.5,
             fill: data.boxFill
           })
@@ -311,16 +320,16 @@
           && pt.y < box.y + box.height + tol;
       };
 
-      if (this.hover.box && isInRect(this.hover.box, 5)) {
-        return this.hover.box;
+      if (hover.box && isInRect(hover.box, 5)) {
+        return hover.box;
       }
-      if (this.hover.edit && this.hover.edit !== this.hover.box && isInRect(this.hover.edit, 5)) {
-        return this.hover.edit;
+      if (hover.edit && hover.edit !== hover.box && isInRect(hover.edit, 5)) {
+        return hover.edit;
       }
       for (i = 0; i < data.chars.length; i++) {
         el = data.chars[i].shape;
         if (isInRect(el, 5)) {
-          d = getDistance(pt, getHandle(el, 8));
+          d = getDistance(pt, getHandle(el));
           if (dist > d) {
             dist = d;
             ret = el;
@@ -331,22 +340,21 @@
     },
 
     cancelDrag: function() {
-      var d = this.hover;
-      if (d.down) {
-        if (d.originBox) {
-          d.edit.remove();
-          d.edit = d.originBox;
-          d.edit.attr('opacity', 1);
-          delete d.originBox;
+      if (hover.down) {
+        if (hover.originBox) {
+          hover.edit.remove();
+          hover.edit = hover.originBox;
+          hover.edit.attr('opacity', 1);
+          delete hover.originBox;
         }
-        if (d.edit) {
-          d.edit.attr({
-            stroke: rgb_a(d.strokeBeforeEdit, .7),
-            fill: this.data.boxFill
+        if (hover.edit) {
+          hover.edit.attr({
+            stroke: rgb_a(hover.strokeBeforeEdit, data.boxOpacity),
+            fill: data.boxFill
           });
-          d.edit = null;
+          hover.edit = null;
         }
-        d.down = null;
+        hover.down = null;
       }
     },
 
