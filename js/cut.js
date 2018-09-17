@@ -534,6 +534,22 @@
         self.cancelDrag();
         self.showHandles(hover.box);
       });
+
+      on('1', function() {
+        self.setRatio(1);
+      });
+      on('2', function() {
+        self.setRatio(2);
+      });
+      on('3', function() {
+        self.setRatio(3);
+      });
+      on('4', function() {
+        self.setRatio(4);
+      });
+      on('5', function() {
+        self.setRatio(5);
+      });
     }
   };
 }());
