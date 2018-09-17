@@ -109,6 +109,7 @@
     boxFill: 'rgba(0, 0, 0, .01)',            // 默认的字框填充色，不能全透明
     boxOpacity: .7,                           // 字框线半透明度
     ratio: 1,               // 缩放比例
+    unit: 5,                // 微调量
     paper: null,            // Raphael 画布
     image: null,            // 背景图
     chars: []               // OCR识别出的字框
@@ -119,13 +120,13 @@
     stroke: 0,              // 字框原来的线色
     fill: 0,                // 字框原来的填充色，鼠标离开框后变为0
     down: null,             // 按下的坐标，未按下时为假
-    edit: null,             // 正拖曳的字框
+    edit: null,             // 正拖拽的字框
     originBox: null,        // 改动前的字框
-    strokeBeforeEdit: 0,    // 拖曳字框原来的线色
+    strokeBeforeEdit: 0,    // 拖拽字框原来的线色
     handles: [],            // 字框的控制点框
     activeHandle: -1        // 当前拖动的手柄框序号
   };
-  
+
   $.cut = {
     data: data,
     hover: hover,
@@ -261,27 +262,7 @@
         if (hover.edit) {
           var pt = getPoint(e);
           if (hover.originBox && getDistance(pt, hover.down) > 1) {
-            var box = hover.edit;
-            var info = self.findCharById(hover.originBox.data('cid')) || {};
-
-            if (!info.char_id) {
-              for (var i = 1; i < 999; i++) {
-                info.char_id = 'new' + i;
-                if (!self.findCharById(info.char_id)) {
-                  data.chars.push(info);
-                  break;
-                }
-              }
-            }
-            box.data('cid', info.char_id).data('char', box.ch);
-            info.shape = box;
-
-            box.insertBefore(hover.originBox);
-            hover.originBox.remove();
-            hover.originBox = null;
-            hover.edit = hover.down = null;
-            self.hoverIn(box);
-            self.showHandles(box);
+            self._changeBox(hover.originBox, hover.edit);
           }
           else {
             self.cancelDrag();
@@ -317,6 +298,35 @@
       data.height = p.height;
       data.chars = p.chars;
       return data;
+    },
+
+    _changeBox: function(src, dst) {
+      if (!src || !dst) {
+        return;
+      }
+
+      var info = this.findCharById(src.data('cid')) || {};
+
+      if (!info.char_id) {
+        for (var i = 1; i < 999; i++) {
+          info.char_id = 'new' + i;
+          if (!this.findCharById(info.char_id)) {
+            data.chars.push(info);
+            break;
+          }
+        }
+      }
+      dst.data('cid', info.char_id).data('char', dst.ch);
+      info.shape = dst;
+
+      dst.insertBefore(src);
+      src.remove();
+      hover.originBox = null;
+      hover.edit = hover.down = null;
+      this.hoverIn(dst);
+      this.showHandles(dst);
+
+      return info.char_id;
     },
 
     findCharById: function(id) {
@@ -387,6 +397,55 @@
       }
     },
 
+    navigate: function(direction) {
+    },
+
+    moveBox: function(direction) {
+      this.cancelDrag();
+      var box = hover.box && hover.box.getBBox();
+      if (box) {
+        if (direction === 'left') {
+          box.x -= data.unit;
+        }
+        else if (direction === 'right') {
+          box.x += data.unit;
+        }
+        else if (direction === 'up') {
+          box.y -= data.unit;
+        }
+        else {
+          box.y += data.unit;
+        }
+
+        hover.edit = createRect({x: box.x, y: box.y}, {x: box.x + box.width, y: box.y + box.height});
+        return this._changeBox(hover.box, hover.edit);
+      }
+    },
+
+    resizeBox: function(direction, shrink) {
+      this.cancelDrag();
+      var box = hover.box && hover.box.getBBox();
+      if (box) {
+        if (direction === 'left') {
+          box.x += shrink ? data.unit : -data.unit;
+          box.width += shrink ? -data.unit : data.unit;
+        }
+        else if (direction === 'right') {
+          box.width += shrink ? -data.unit : data.unit;
+        }
+        else if (direction === 'up') {
+          box.y += shrink ? data.unit : -data.unit;
+          box.height += shrink ? -data.unit : data.unit;
+        }
+        else {
+          box.height += shrink ? -data.unit : data.unit;
+        }
+
+        hover.edit = createRect({x: box.x, y: box.y}, {x: box.x + box.width, y: box.y + box.height});
+        return this._changeBox(hover.box, hover.edit);
+      }
+    },
+
     toggleBox: function(visible) {
       data.chars.forEach(function(box) {
         if (box.shape) {
@@ -400,6 +459,81 @@
       data.ratio = ratio;
       data.paper.setZoom(ratio);
       data.paper.setSize(data.width * ratio, data.height * ratio);
+    },
+
+    bindKeys: function() {
+      var self = this;
+      var on = function(key, func) {
+        $.mapKey(key, func, {direction: 'down'});
+      };
+
+      // 方向键：在字框间导航
+      on('left', function() {
+        self.navigate('left');
+      });
+      on('right', function() {
+        self.navigate('right');
+      });
+      on('up', function() {
+        self.navigate('up');
+      });
+      on('down', function() {
+        self.navigate('down');
+      });
+
+      // w a s d：移动当前字框
+      on('a', function() {
+        self.moveBox('left');
+      });
+      on('d', function() {
+        self.moveBox('right');
+      });
+      on('w', function() {
+        self.moveBox('up');
+      });
+      on('s', function() {
+        self.moveBox('down');
+      });
+
+      // alt+方向键：放大字框
+      on('alt+left', function() {
+        self.resizeBox('left');
+      });
+      on('alt+right', function() {
+        self.resizeBox('right');
+      });
+      on('alt+up', function() {
+        self.resizeBox('up');
+      });
+      on('alt+down', function() {
+        self.resizeBox('down');
+      });
+
+      // shift+方向键：缩小字框
+      on('shift+left', function() {
+        self.resizeBox('left', true);
+      });
+      on('shift+right', function() {
+        self.resizeBox('right', true);
+      });
+      on('shift+up', function() {
+        self.resizeBox('up', true);
+      });
+      on('shift+down', function() {
+        self.resizeBox('down', true);
+      });
+
+      // DEL：删除当前字框，ESC 放弃拖拽改动
+      on('back', function() {
+        self.removeBox();
+      });
+      on('del', function() {
+        self.removeBox();
+      });
+      on('esc', function() {
+        self.cancelDrag();
+        self.showHandles(hover.box);
+      });
     }
   };
 }());

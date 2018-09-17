@@ -42,6 +42,7 @@
 
 <script src="https://cdn.bootcss.com/raphael/2.2.7/raphael.js"></script>
 <script src="js/vendor/raphael.zoom.js"></script>
+<script src="js/vendor/jquery.mapkey.js"></script>
 
 <script src="data/GL_79_4_7.js"></script>
 <script src="js/cut.js"></script>
@@ -56,6 +57,7 @@
       chars: cutdata.char_data
     });
 
+    $.cut.bindKeys();
     $('.zoom-btn').click(function() {
       $.cut.setRatio(parseFloat($(this).text()));
     });
@@ -64,11 +66,6 @@
     });
     $('#switchBox').click(function() {
       $.cut.toggleBox();
-    });
-    $(document).keydown(function(e) {
-      if (e.keyCode === 8) {
-        console.log($.cut.removeBox());
-      }
     });
   });
 </script>
