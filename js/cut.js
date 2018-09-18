@@ -176,7 +176,7 @@
         state.hoverHandle.fill = box.attr('fill');
         box.attr({
           stroke: rgb_a(data.hoverColor, data.boxOpacity),
-          fill: rgb_a(data.hoverFill, .05)
+          // fill: rgb_a(data.hoverFill, .05)
         });
       }
     },
