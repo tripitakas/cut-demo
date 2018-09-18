@@ -546,8 +546,7 @@
       data.paper.setZoom(ratio);
       data.paper.setSize(data.width * ratio, data.height * ratio);
 
-      this.hoverIn(el);
-      this.showHandles(el, state.editHandle);
+      this.switchCurrentBox(el);
 
       if (box) {
         var box2 = el.getBBox();
