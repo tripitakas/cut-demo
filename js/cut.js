@@ -108,85 +108,106 @@
     handleSize: 2,                            // 字框控制点的半宽
     boxFill: 'rgba(0, 0, 0, .01)',            // 默认的字框填充色，不能全透明
     boxOpacity: .7,                           // 字框线半透明度
-    ratio: 1,               // 缩放比例
-    unit: 5,                // 微调量
-    paper: null,            // Raphael 画布
-    image: null,            // 背景图
-    chars: []               // OCR识别出的字框
+    ratio: 1,                                 // 缩放比例
+    unit: 5,                                  // 微调量
+    paper: null,                              // Raphael 画布
+    image: null,                              // 背景图
+    chars: []                                 // OCR识别出的字框
   };
 
-  var hover = {
-    box: null,              // 掠过的字框
-    stroke: 0,              // 字框原来的线色
-    fill: 0,                // 字框原来的填充色，鼠标离开框后变为0
-    down: null,             // 按下的坐标，未按下时为假
-    edit: null,             // 正拖拽的字框
-    originBox: null,        // 改动前的字框
-    strokeBeforeEdit: 0,    // 拖拽字框原来的线色
-    fillBeforeEdit: 0,      // 拖拽字框原来的填充色
-    handles: [],            // 字框的控制点框
-    activeHandle: -1        // 当前拖动的手柄框序号
+  var state = {
+    hover: null,                              // 掠过的字框
+    hoverStroke: 0,                           // 掠过的字框原来的线色
+    hoverHandle: {handles: [], index: -1, fill: 0}, // 掠过的字框的控制点，fill为原来的填充色，鼠标离开框后变为0
+
+    down: null,                               // 按下的坐标，未按下时为空
+    edit: null,                               // 当前编辑的字框
+    originBox: null,                          // 改动前的字框
+    editStroke: 0,                            // 当前编辑字框原来的线色
+    editHandle: {handles: [], index: -1, fill: 0} // 当前编辑字框的控制点
   };
 
   $.cut = {
     data: data,
-    hover: hover,
+    state: state,
 
-    showHandles: function(el) {
+    showHandles: function(el, handle) {
       var i, pt, r;
       var size = data.handleSize * ((data.ratio - 1) * 0.4 + 1);
 
-      for (i = 0; i < hover.handles.length; i++) {
-        hover.handles[i].remove();
+      for (i = 0; i < handle.handles.length; i++) {
+        handle.handles[i].remove();
       }
-      hover.handles.length = 0;
+      handle.handles.length = 0;
 
       if (el) {
         for (i = 0; i < 8; i++) {
           pt = getHandle(el, i);
           r = data.paper.rect(pt.x - size, pt.y - size, size * 2, size * 2)
             .attr({
-              stroke: i === hover.activeHandle ? data.activeHandleColor : data.hoverColor,
-              fill: i === hover.activeHandle ? rgb_a(data.activeHandleFill, .8) : rgb_a(data.handleFill, .4)
+              stroke: i === handle.index ? data.activeHandleColor : data.hoverColor,
+              fill: i === handle.index ? rgb_a(data.activeHandleFill, .8) : rgb_a(data.handleFill, .4)
             });
-          hover.handles.push(r);
+          handle.handles.push(r);
         }
       }
     },
 
-    activateHandle: function(el, pt) {
-      var dist = hover.fill ? 20 : 8;
+    activateHandle: function(el, handle, pt) {
+      var dist = handle.fill ? 50 : 8;
       var d, i;
 
-      hover.activeHandle = -1;
+      handle.index = -1;
       for (i = el ? 7 : -1; i >= 0; i--) {
         d = getDistance(pt, getHandle(el, i));
         if (dist > d) {
           dist = d;
-          hover.activeHandle = i;
+          handle.index = i;
         }
       }
-      this.showHandles(el);
+      this.showHandles(el, handle);
     },
 
     hoverIn: function(box) {
-      if (box && !hover.edit) {
-        hover.box = box;
-        hover.activeHandle = -1;
-        hover.stroke = box.attr('stroke');
-        hover.fill = box.attr('fill');
+      if (box && box !== state.edit) {
+        state.hover = box;
+        state.hoverHandle.index = -1;
+        state.hoverStroke = box.attr('stroke');
+        state.hoverHandle.fill = box.attr('fill');
         box.attr({
           stroke: rgb_a(data.hoverColor, data.boxOpacity),
-          fill: rgb_a(data.hoverFill, .2)
+          fill: rgb_a(data.hoverFill, .05)
         });
       }
     },
 
     hoverOut: function(box) {
-      if (box && !hover.edit && hover.box === box && hover.fill) {
-        box.attr({ stroke: hover.stroke, fill: hover.fill });
-        hover.fill = 0;   // 设置此标志，暂不清除 box 变量，以便在框外也可点控制点
+      if (box && state.hover === box && state.hoverHandle.fill) {
+        box.attr({ stroke: state.hoverStroke, fill: state.hoverHandle.fill });
+        state.hoverHandle.fill = 0;   // 设置此标志，暂不清除 box 变量，以便在框外也可点控制点
       }
+      else if (box && state.edit === box && state.editHandle.fill) {
+        box.attr({ stroke: state.editStroke, fill: state.editHandle.fill });
+        state.editHandle.fill = 0;
+      }
+    },
+    
+    switchCurrentBox: function(box) {
+      this.hoverOut(state.hover);
+      this.hoverOut(state.edit);
+      state.hover = null;
+      this.showHandles(state.hover, state.hoverHandle);
+
+      state.edit = box;
+      if (box) {
+        state.editStroke = box.attr('stroke');
+        state.editHandle.fill = box.attr('fill');
+        box.attr({
+          stroke: rgb_a(data.changedColor, data.boxOpacity),
+          fill: rgb_a(data.hoverFill, .4)
+        });
+      }
+      this.showHandles(state.edit, state.editHandle);
     },
 
     create: function(p) {
@@ -201,67 +222,73 @@
         var pt = getPoint(e);
         var box = self.findBoxByPoint(pt);
 
-        if (hover.box !== box) {
-          self.hoverOut(hover.box);
+        if (state.hover !== box) {
+          self.hoverOut(state.hover);
           self.hoverIn(box);
         }
-        self.activateHandle(hover.box, pt);
+        if (box === state.edit) {
+          self.activateHandle(state.edit, state.editHandle, pt);
+          state.hover = null;
+          self.showHandles(null, state.hoverHandle);
+        } else {
+          state.editHandle.index = -1;
+          self.showHandles(null, state.editHandle);
+          self.activateHandle(state.hover, state.hoverHandle, pt);
+        }
 
-        if (hover.box && !hover.fill && hover.activeHandle < 0) {
-          self.hoverOut(hover.box);
-          hover.box = null;
-          self.showHandles();
+        if (state.hover && !state.hoverHandle.fill && state.hoverHandle.index < 0) {
+          self.hoverOut(state.hover);
+          state.hover = null;
+          self.showHandles(state.hover, state.hoverHandle);
         }
         e.preventDefault();
       };
 
       var mouseDown = function(e) {
         e.preventDefault();
-        hover.down = getPoint(e);
-        if (hover.box) {
-          hover.edit = hover.box;
-          hover.strokeBeforeEdit = hover.stroke;
-          hover.fillBeforeEdit = hover.fill;
-          self.activateHandle(hover.edit, hover.down);
+        state.down = getPoint(e);
 
-          if (hover.activeHandle >= 0) {
-            hover.down = getHandle(hover.edit, hover.activeHandle);
-          } else {
-            hover.edit = null;    // for hoverOut
-            self.hoverOut(hover.box);
-            hover.box = null;
-          }
+        if (!state.edit || state.editHandle.index < 0) {
+          self.switchCurrentBox(state.hover);
         }
-        if (!hover.box) {
-          hover.activeHandle = 2;  // 右下角
-          hover.edit = createRect(hover.down, hover.down, true);
+        self.activateHandle(state.edit, state.editHandle, state.down);
+        if (state.editHandle.index >= 0) {
+          state.down = getHandle(state.edit, state.editHandle.index);
+        } else {
+          self.hoverOut(state.edit);
+          state.edit = null;
+        }
+
+        if (!state.edit) {
+          state.editHandle.index = 2;  // 右下角
+          state.edit = createRect(state.down, state.down, true);
         }
       };
 
       var mouseDrag = function(e) {
         var pt = getPoint(e);
-        var box = setHandle(hover.originBox || hover.edit, hover.activeHandle, pt);
+        var box = setHandle(state.originBox || state.edit, state.editHandle.index, pt);
 
         if (box) {
           // 刚开始改动，记下原来的图框并变暗，改完将删除，或放弃改动时(cancelDrag)恢复属性
-          if (!hover.originBox) {
-            hover.originBox = hover.edit;
-            hover.originBox.attr({stroke: 'rgba(0, 255, 0, .8)', 'opacity': .5});
+          if (!state.originBox) {
+            state.originBox = state.edit;
+            state.originBox.attr({stroke: 'rgba(0, 255, 0, .8)', 'opacity': .5});
           } else {
-            hover.edit.remove();
+            state.edit.remove();
           }
-          hover.edit = box;
+          state.edit = box;
         }
-        self.showHandles(hover.edit);
+        self.showHandles(state.edit, state.editHandle);
         e.preventDefault();
       };
 
       var mouseUp = function(e) {
         e.preventDefault();
-        if (hover.edit) {
+        if (state.down) {
           var pt = getPoint(e);
-          if (hover.originBox && getDistance(pt, hover.down) > 1) {
-            self._changeBox(hover.originBox, hover.edit);
+          if (state.originBox && getDistance(pt, state.down) > 1) {
+            self._changeBox(state.originBox, state.edit);
           }
           else {
             self.cancelDrag();
@@ -280,7 +307,7 @@
         .mousedown(mouseDown)
         .mouseup(mouseUp)
         .mousemove(function(e) {
-          (hover.edit ? mouseDrag : mouseHover)(e);
+          (state.down ? mouseDrag : mouseHover)(e);
         });
 
       p.chars.forEach(function(box) {
@@ -291,7 +318,10 @@
             fill: data.boxFill
           })
           .data('cid', box.char_id)
-          .data('char', box.ch);
+          .data('char', box.ch)
+          .click(function() {
+            self.switchCurrentBox(this);
+          });
       });
 
       data.width = p.width;
@@ -321,10 +351,10 @@
 
       dst.insertBefore(src);
       src.remove();
-      hover.originBox = null;
-      hover.edit = hover.down = null;
-      this.hoverIn(dst);
-      this.showHandles(dst);
+      state.originBox = null;
+      state.edit = state.down = null;
+      this.switchCurrentBox(dst);
+      this.showHandles(dst, state.editHandle);
 
       return info.char_id;
     },
@@ -344,11 +374,11 @@
           && pt.y < box.y + box.height + tol;
       };
 
-      if (hover.box && isInRect(hover.box, 5)) {
-        return hover.box;
+      if (state.edit && isInRect(state.edit, 5)) {
+        return state.edit;
       }
-      if (hover.edit && hover.edit !== hover.box && isInRect(hover.edit, 5)) {
-        return hover.edit;
+      if (state.hover && isInRect(state.hover, 5)) {
+        return state.hover;
       }
       for (i = 0; i < data.chars.length; i++) {
         el = data.chars[i].shape;
@@ -364,35 +394,35 @@
     },
 
     cancelDrag: function() {
-      if (hover.down) {
-        if (hover.originBox) {
-          hover.edit.remove();
-          hover.edit = hover.originBox;
-          hover.edit.attr('opacity', 1);
-          delete hover.originBox;
+      if (state.down) {
+        if (state.originBox) {
+          state.edit.remove();
+          state.edit = state.originBox;
+          state.edit.attr('opacity', 1);
+          delete state.originBox;
         }
-        if (hover.edit && hover.edit.getBBox().width < 1) {
-          hover.edit.remove();
+        if (state.edit && state.edit.getBBox().width < 1) {
+          state.edit.remove();
         }
-        else if (hover.edit) {
-          hover.edit.attr({
-            stroke: hover.strokeBeforeEdit,
-            fill: hover.fillBeforeEdit
+        else if (state.edit) {
+          state.edit.attr({
+            stroke: state.editStroke,
+            fill: state.editHandle.fill
           });
         }
-        hover.edit = null;
-        hover.down = null;
+        state.edit = null;
+        state.down = null;
       }
     },
 
     removeBox: function() {
       this.cancelDrag();
-      if (hover.box) {
-        var info = this.findCharById(hover.box.data('cid'));
+      if (state.edit) {
+        var info = this.findCharById(state.edit.data('cid'));
         info.shape = null;
-        hover.box.remove();
-        hover.box = null;
-        this.showHandles();
+        state.edit.remove();
+        state.edit = null;
+        this.showHandles(state.edit, state.editHandle);
         return info.char_id;
       }
     },
@@ -402,7 +432,7 @@
       var minDist = invalid, d, ret;
 
       chars = data.chars.filter(function(c) { return c.shape; });
-      ret = cur = hover.box || (chars[chars.length - 1] || {}).shape;
+      ret = cur = state.edit || state.hover || (chars[chars.length - 1] || {}).shape;
       cur = cur && cur.getBBox();
 
       if (direction === 'left' || direction === 'right') {
@@ -443,16 +473,14 @@
 
       if (ret) {
         this.cancelDrag();
-        this.hoverOut(hover.box);
-        this.hoverIn(ret);
-        this.showHandles(ret);
+        this.switchCurrentBox(ret);
         return ret.data('cid');
       }
     },
 
     moveBox: function(direction) {
       this.cancelDrag();
-      var box = hover.box && hover.box.getBBox();
+      var box = state.edit && state.edit.getBBox();
       if (box) {
         if (direction === 'left') {
           box.x -= data.unit;
@@ -467,14 +495,14 @@
           box.y += data.unit;
         }
 
-        hover.edit = createRect({x: box.x, y: box.y}, {x: box.x + box.width, y: box.y + box.height});
-        return this._changeBox(hover.box, hover.edit);
+        var newBox = createRect({x: box.x, y: box.y}, {x: box.x + box.width, y: box.y + box.height});
+        return this._changeBox(state.edit, newBox);
       }
     },
 
     resizeBox: function(direction, shrink) {
       this.cancelDrag();
-      var box = hover.box && hover.box.getBBox();
+      var box = state.edit && state.edit.getBBox();
       if (box) {
         if (direction === 'left') {
           box.x += shrink ? data.unit : -data.unit;
@@ -491,8 +519,8 @@
           box.height += shrink ? -data.unit : data.unit;
         }
 
-        hover.edit = createRect({x: box.x, y: box.y}, {x: box.x + box.width, y: box.y + box.height});
-        return this._changeBox(hover.box, hover.edit);
+        var newBox = createRect({x: box.x, y: box.y}, {x: box.x + box.width, y: box.y + box.height});
+        return this._changeBox(state.edit, newBox);
       }
     },
 
@@ -505,20 +533,21 @@
     },
 
     setRatio: function(ratio) {
-      var el = hover.box;
+      var el = state.edit || state.hover;
       var box = el && el.getBBox();
       var body = document.documentElement || document.body;
       var pos = [body.scrollLeft, body.scrollTop];
 
       this.cancelDrag();
-      this.hoverOut(el);
+      this.hoverOut(state.hover);
+      this.hoverOut(state.edit);
 
       data.ratio = ratio;
       data.paper.setZoom(ratio);
       data.paper.setSize(data.width * ratio, data.height * ratio);
 
       this.hoverIn(el);
-      this.showHandles(el);
+      this.showHandles(el, state.editHandle);
 
       if (box) {
         var box2 = el.getBBox();
