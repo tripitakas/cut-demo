@@ -29,6 +29,8 @@
 - `js/vendor`：第三方开源插件。
 - `css/cut.css`：切分校对样式文件。
 - `data/*.jpg, *.js`：页面图和OCR数据。
+- `data/gen_html.py`：自动生成页面及其缩略图的脚本，生成的`index.tmp` 可合并到`index.html`。
+- `html/template.html`：页面模板网页，此目录下其他网页和缩略图自动生成。
 
 ## 参考资料
 
