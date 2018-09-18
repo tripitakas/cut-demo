@@ -11,6 +11,3 @@
 .idea/
 
 # This Project
-html/*.png
-html/*.html
-!html/template.html

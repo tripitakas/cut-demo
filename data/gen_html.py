@@ -25,7 +25,7 @@ piece = '''
       </div>
     </div>'''
 
-index = []
+index = ['  <div class="row">']
 for fn in os.listdir(path):
     name = fn[:-4]
     img_file = os.path.join(path, name + '.jpg')
@@ -44,7 +44,10 @@ for fn in os.listdir(path):
         if h > size:
             w = round(size * w / h)
             h = size
-        im.thumbnail((int(w), int(h)), Image.ANTIALIAS)
-        im.save(os.path.join(html_path, '%s.png' % name), 'png')
+        thumb_file = os.path.join(html_path, '%s.png' % name)
+        if not os.path.exists(thumb_file):
+            im.thumbnail((int(w), int(h)), Image.ANTIALIAS)
+            im.save(thumb_file, 'png')
+
 with open('index.tmp', 'w') as f:
-    f.write(''.join(index))
+    f.write(''.join(index) + '\n  </div>')
