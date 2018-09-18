@@ -74,7 +74,7 @@
       });
       on('esc', function() {
         self.cancelDrag();
-        self.showHandles(hover.box);
+        self.showHandles(hover.edit);
       });
 
       // 1~5 页面缩放

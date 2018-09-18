@@ -76,10 +76,10 @@
     }
   }
 
-  // 根据两个对角点创建字框图形，要求字框的面积大于等于25
+  // 根据两个对角点创建字框图形，要求字框的面积大于等于100且宽高都至少为5，以避免误点出碎块
   function createRect(pt1, pt2, force) {
     var width = Math.abs(pt1.x - pt2.x), height = Math.abs(pt1.y - pt2.y);
-    if (width * height >= 25 || force) {
+    if (width >= 5 && height >= 5 && width * height >= 100 || force) {
       var x = Math.min(pt1.x, pt2.x), y = Math.min(pt1.y, pt2.y);
       return data.paper.rect(x, y, width, height)
         .initZoom().setAttr({
@@ -298,6 +298,7 @@
           else {
             self.cancelDrag();
           }
+          self.switchCurrentBox(state.edit);
         }
       };
 
@@ -323,10 +324,7 @@
             // fill: data.boxFill
           })
           .data('cid', box.char_id)
-          .data('char', box.ch)
-          .click(function() {
-            self.switchCurrentBox(this);
-          });
+          .data('char', box.ch);
       });
 
       data.width = p.width;
@@ -359,7 +357,6 @@
       state.originBox = null;
       state.edit = state.down = null;
       this.switchCurrentBox(dst);
-      this.showHandles(dst, state.editHandle);
 
       return info.char_id;
     },
@@ -408,6 +405,7 @@
         }
         if (state.edit && state.edit.getBBox().width < 1) {
           state.edit.remove();
+          state.edit = null;
         }
         else if (state.edit) {
           state.edit.attr({
@@ -415,7 +413,6 @@
             fill: state.editHandle.fill
           });
         }
-        state.edit = null;
         state.down = null;
       }
     },
