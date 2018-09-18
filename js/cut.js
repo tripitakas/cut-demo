@@ -76,16 +76,16 @@
     }
   }
 
-  // 根据两个对角点创建字框图形，要求字框的宽高都不小于5
+  // 根据两个对角点创建字框图形，要求字框的面积大于等于25
   function createRect(pt1, pt2, force) {
     var width = Math.abs(pt1.x - pt2.x), height = Math.abs(pt1.y - pt2.y);
-    if (width >= 5 && height >= 5 || force) {
+    if (width * height >= 25 || force) {
       var x = Math.min(pt1.x, pt2.x), y = Math.min(pt1.y, pt2.y);
       return data.paper.rect(x, y, width, height)
         .initZoom().setAttr({
           stroke: rgb_a(data.changedColor, data.boxOpacity),
           'stroke-width': 1.5,
-          fill: rgb_a(data.hoverFill, .15)
+          // fill: rgb_a(data.hoverFill, .15)
         });
     }
   }
@@ -315,7 +315,7 @@
           .attr({
             stroke: rgb_a(data.normalColor, data.boxOpacity),
             'stroke-width': 1.5,
-            fill: data.boxFill
+            // fill: data.boxFill
           })
           .data('cid', box.char_id)
           .data('char', box.ch)

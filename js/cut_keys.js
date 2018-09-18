@@ -37,32 +37,32 @@
         self.moveBox('down');
       });
 
-      // alt+方向键：放大字框
+      // alt+方向键：缩小字框
       on('alt+left', function() {
-        self.resizeBox('left');
-      });
-      on('alt+right', function() {
-        self.resizeBox('right');
-      });
-      on('alt+up', function() {
-        self.resizeBox('up');
-      });
-      on('alt+down', function() {
-        self.resizeBox('down');
-      });
-
-      // shift+方向键：缩小字框
-      on('shift+left', function() {
         self.resizeBox('left', true);
       });
-      on('shift+right', function() {
+      on('alt+right', function() {
         self.resizeBox('right', true);
       });
-      on('shift+up', function() {
+      on('alt+up', function() {
         self.resizeBox('up', true);
       });
-      on('shift+down', function() {
+      on('alt+down', function() {
         self.resizeBox('down', true);
+      });
+
+      // shift+方向键：放大字框
+      on('shift+left', function() {
+        self.resizeBox('left');
+      });
+      on('shift+right', function() {
+        self.resizeBox('right');
+      });
+      on('shift+up', function() {
+        self.resizeBox('up');
+      });
+      on('shift+down', function() {
+        self.resizeBox('down');
       });
 
       // DEL：删除当前字框，ESC 放弃拖拽改动
@@ -92,6 +92,23 @@
       });
       on('5', function() {
         self.setRatio(5);
+      });
+
+      // shift + 5~9 页面缩放
+      on('shift+5', function() {
+        self.setRatio(0.5);
+      });
+      on('shift+6', function() {
+        self.setRatio(0.6);
+      });
+      on('shift+7', function() {
+        self.setRatio(0.7);
+      });
+      on('shift+8', function() {
+        self.setRatio(0.8);
+      });
+      on('shift+9', function() {
+        self.setRatio(0.9);
       });
     }
   });
