@@ -105,7 +105,7 @@
     handleFill: '#ffffff',                    // 字框控制点的填充色
     activeHandleColor: '#72141d',             // 活动控制点的线色
     activeHandleFill: '#0000ff',              // 活动控制点的填充色
-    handleSize: 2,                            // 字框控制点的半宽
+    handleSize: 1.7,                          // 字框控制点的半宽
     boxFill: 'rgba(0, 0, 0, .01)',            // 默认的字框填充色，不能全透明
     boxOpacity: .7,                           // 字框线半透明度
     ratio: 1,                                 // 缩放比例
@@ -120,7 +120,8 @@
     hoverStroke: 0,                           // 掠过的字框原来的线色
     hoverHandle: {handles: [], index: -1, fill: 0}, // 掠过的字框的控制点，fill为原来的填充色，鼠标离开框后变为0
 
-    down: null,                               // 按下的坐标，未按下时为空
+    down: null,                               // 按下时控制点的坐标，未按下时为空
+    downOrigin: null,                         // 按下的坐标
     edit: null,                               // 当前编辑的字框
     originBox: null,                          // 改动前的字框
     editStroke: 0,                            // 当前编辑字框原来的线色
@@ -246,7 +247,7 @@
 
       var mouseDown = function(e) {
         e.preventDefault();
-        state.down = getPoint(e);
+        state.downOrigin = state.down = getPoint(e);
 
         if (!state.edit || state.editHandle.index < 0) {
           self.switchCurrentBox(state.hover);
@@ -267,8 +268,13 @@
 
       var mouseDrag = function(e) {
         var pt = getPoint(e);
-        var box = setHandle(state.originBox || state.edit, state.editHandle.index, pt);
 
+        e.preventDefault();
+        if (!state.originBox && getDistance(pt, state.downOrigin) < 3) {
+          return;
+        }
+
+        var box = setHandle(state.originBox || state.edit, state.editHandle.index, pt);
         if (box) {
           // 刚开始改动，记下原来的图框并变暗，改完将删除，或放弃改动时(cancelDrag)恢复属性
           if (!state.originBox) {
@@ -280,7 +286,6 @@
           state.edit = box;
         }
         self.showHandles(state.edit, state.editHandle);
-        e.preventDefault();
       };
 
       var mouseUp = function(e) {
