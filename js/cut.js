@@ -430,7 +430,7 @@
     },
 
     navigate: function(direction) {
-      var i, cur, chars, calc, unit, invalid = 1e5;
+      var i, cur, chars, calc, invalid = 1e5;
       var minDist = invalid, d, ret;
 
       chars = data.chars.filter(function(c) { return c.shape; });
@@ -438,29 +438,43 @@
       cur = cur && cur.getBBox();
 
       if (direction === 'left' || direction === 'right') {
-        unit = Math.min(cur.width / 2, 10);
         calc = function(box) {
-          // left：待测框的左侧不在当前框左边，则跳过；right：待测框的右侧不在当前框右边，则跳过
-          if (direction === 'left' ? (box.x > cur.x - unit)
-              : (box.x + box.width < cur.x + cur.width + unit)) {
-            return invalid;
+          // 排除水平反方向及同列的框
+          if (direction === 'left') {
+            // 待测框的左边缘不在当前框的左边缘的左边，即待测框肯定在同列或右边列
+            // 或待测框与当前框X重叠部分超过1/3
+            if (box.x > cur.x - data.unit
+              || box.x + box.width > cur.x + cur.width / 3) {
+              return invalid;
+            }
+          } else {
+            // 待测框的右边缘不在当前框的右边缘的右边，即待测框肯定在同列或左边列
+            // 或待测框与当前框X重叠部分超过1/3
+            if (box.x + box.width < cur.x + cur.width + data.unit
+              || box.x < cur.x + cur.width * 0.66) {
+              return invalid;
+            }
           }
-          // 优先找中心Y坐标离得近的，其次找X方向离得近的
-          var rowUnit = Math.max(unit, box.width / 2);
+
+          // 找中心点离得近的
           return Math.abs(box.y + box.height / 2 - cur.y - cur.height / 2) +
-            Math.floor(Math.abs(box.x + box.width / 2 - cur.x - cur.width / 2) / rowUnit) * 10;
+            Math.abs(box.x + box.width / 2 - cur.x - cur.width / 2);
         };
       }
       else {
-        unit = Math.min(cur.height / 2, 10);
         calc = function(box) {
-          if (direction === 'up' ? (box.y > cur.y - unit)
-              : (box.y + box.height < cur.y + cur.height + unit)) {
+          // 排除垂直反方向及同行位置的框
+          if (direction === 'up' ? (box.y > cur.y - data.unit)
+              : (box.y + box.height < cur.y + cur.height + data.unit)) {
             return invalid;
           }
-          var colUnit = Math.max(unit, box.height / 2);
-          return Math.abs(box.x + box.width / 2 - cur.x - cur.width / 2) +
-            Math.floor(Math.abs(box.y + box.height / 2 - cur.y - cur.height / 2) / colUnit) * 10;
+          // 排除不在同一列的框
+          if (box.x + box.width < cur.x + cur.width / 3 ||
+            box.x > cur.x + cur.width * 0.66) {
+            return invalid;
+          }
+          // 找Y方向离得近的
+          return Math.abs(box.y + box.height / 2 - cur.y - cur.height / 2);
         };
       }
 
