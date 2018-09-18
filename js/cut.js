@@ -97,8 +97,8 @@
   }
 
   var data = {
-    normalColor: '#af82e4',                   // 正常字框的线色
-    changedColor: '#e44349',                  // 改动字框的线色
+    normalColor: '#158815',                   // 正常字框的线色
+    changedColor: '#C53433',                  // 改动字框的线色
     hoverColor: '#e42d81',                    // 掠过时的字框线色
     hoverFill: '#ff0000',                     // 掠过时的字框填充色
     handleColor: '#e3e459',                   // 字框控制点的线色
