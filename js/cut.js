@@ -441,12 +441,12 @@
         calc = function(box) {
           // 排除水平反方向的框：如果方向为left，则用当前框右边的x来过滤；如果方向为right，则用当前框左边的x来过滤
           var dx = direction === 'left' ? (box.x + box.width - cur.x - cur.width) : (box.x - cur.x);
-          if (direction === 'left' ? dx > -data.unit : dx < data.unit) {
+          if (direction === 'left' ? dx > -2 : dx < 2) {
             return invalid;
           }
           // 找中心点离得近的，优先找X近的，不要跳到较远的其他栏
           var dy = Math.abs(box.y + box.height / 2 - cur.y - cur.height / 2);
-          if (dy > Math.max(cur.height, box.height) * 5) {
+          if (dy > Math.max(cur.height, box.height) * 5) {  // 可能是其他栏
             return invalid;
           }
           return dy * 2 + Math.abs(dx);
@@ -456,11 +456,14 @@
         calc = function(box) {
           // 排除垂直反方向的框：如果方向为up，则用当前框下边的y来过滤；如果方向为down，则用当前框上边的y来过滤
           var dy = direction === 'up' ? (box.y + box.height - cur.y - cur.height) : (box.y - cur.y);
-          if (direction === 'up' ? dy > -data.unit : dy < data.unit) {
+          if (direction === 'up' ? dy > -2 : dy < 2) {
             return invalid;
           }
-          // 找中心点离得近的，优先找Y近的
+          // 找中心点离得近的，优先找Y近的，不要跳到较远的其他列
           var dx = Math.abs(box.x + box.width / 2 - cur.x - cur.width / 2);
+          if (dx > Math.max(cur.width, box.width) * 5) {
+            return invalid;
+          }
           return dx * 2 + Math.abs(dy);
         };
       }
