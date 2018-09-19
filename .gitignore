@@ -12,5 +12,6 @@
 
 # Node Files
 node_modules/
+package-lock.json
 
 # This Project
