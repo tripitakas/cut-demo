@@ -107,7 +107,7 @@
     activeHandleFill: '#0000ff',              // 活动控制点的填充色
     handleSize: 1.7,                          // 字框控制点的半宽
     boxFill: 'rgba(0, 0, 0, .01)',            // 默认的字框填充色，不能全透明
-    boxOpacity: .7,                           // 字框线半透明度
+    boxOpacity: 0.7,                          // 字框线半透明度
     ratio: 1,                                 // 缩放比例
     unit: 5,                                  // 微调量
     paper: null,                              // Raphael 画布
@@ -147,7 +147,7 @@
           r = data.paper.rect(pt.x - size, pt.y - size, size * 2, size * 2)
             .attr({
               stroke: i === handle.index ? data.activeHandleColor : data.hoverColor,
-              fill: i === handle.index ? rgb_a(data.activeHandleFill, .8) : rgb_a(data.handleFill, .4)
+              fill: i === handle.index ? rgb_a(data.activeHandleFill, 0.8) : rgb_a(data.handleFill, 0.4)
             });
           handle.handles.push(r);
         }
@@ -205,7 +205,7 @@
         state.editHandle.fill = box.attr('fill');
         box.attr({
           stroke: rgb_a(data.changedColor, data.boxOpacity),
-          fill: rgb_a(data.hoverFill, .4)
+          fill: rgb_a(data.hoverFill, 0.4)
         });
       }
       this.showHandles(state.edit, state.editHandle);
@@ -279,7 +279,7 @@
           // 刚开始改动，记下原来的图框并变暗，改完将删除，或放弃改动时(cancelDrag)恢复属性
           if (!state.originBox) {
             state.originBox = state.edit;
-            state.originBox.attr({stroke: 'rgba(0, 255, 0, .8)', 'opacity': .5});
+            state.originBox.attr({stroke: 'rgba(0, 255, 0, 0.8)', 'opacity': 0.5});
           } else {
             state.edit.remove();
           }
@@ -375,9 +375,10 @@
       var ret = null, dist = 1e5, d, i, el;
       var isInRect = function(el, tol) {
         var box = el.getBBox();
-        return box && pt.x > box.x - tol && pt.y > box.y - tol
-          && pt.x < box.x + box.width + tol
-          && pt.y < box.y + box.height + tol;
+        return box && pt.x > box.x - tol &&
+          pt.y > box.y - tol &&
+          pt.x < box.x + box.width + tol &&
+          pt.y < box.y + box.height + tol;
       };
 
       if (state.edit && isInRect(state.edit, 5)) {

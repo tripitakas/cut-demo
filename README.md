@@ -2,6 +2,11 @@
 
 基于 jQuery、Raphael 的切分校对单元测试和原型。
 
+[![Travis][travis_img]][travis]
+
+[travis]: https://travis-ci.org/tripitakas/cut-demo
+[travis_img]: https://travis-ci.org/tripitakas/cut-demo.svg?branch=master
+
 [在线预览](http://ggbstudy.top/cut/)
 
 - [x] 页面缩放(1~5倍)，快捷键为数字键
