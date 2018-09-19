@@ -10,4 +10,7 @@
 # WebStorm Files
 .idea/
 
+# Node Files
+node_modules/
+
 # This Project

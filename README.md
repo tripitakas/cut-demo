@@ -12,7 +12,7 @@
 - [x] 字框编辑：删除字框，del键或回退键
 - [x] 字框跳转导航，按方向键
 - [x] 支持编辑和导航的快捷键
-- [ ] 自动单元测试
+- [x] 自动单元测试
 - [x] 缩放时当前字框位置保持不变，便于快速定位
 - [x] 掠过字框与当前编辑字框分离，当前字框红背景，掠过字框无背景
 - [ ] 遮盖框住文字
@@ -23,14 +23,40 @@
 
 ## 文件说明
 
-- `cut1.html`：样例页面，包含页面相关的个性化数据。
-- `js/cut.js`：切分校对内核文件，包含全局性配置数据。
-- `js/cut_keys.js`：切分校对的快捷键映射文件。
-- `js/vendor`：第三方开源插件。
-- `css/cut.css`：切分校对样式文件。
-- `data/*.jpg, *.js`：页面图和OCR数据。
-- `data/gen_html.py`：自动生成页面及其缩略图的脚本，生成的`index.tmp` 可合并到`index.html`。
-- `html/template.html`：页面模板网页，此目录下其他网页和缩略图自动生成。
+### 内核文件
+
+- `app/cut1.html`：样例页面，包含页面相关的个性化数据。
+- `app/js/cut.js`：切分校对内核文件，包含全局性配置数据。
+- `app/js/cut_keys.js`：切分校对的快捷键映射文件。
+- `app/js/vendor`：第三方开源插件。
+- `app/css/cut.css`：切分校对样式文件。
+- `app/data/*.jpg, *.js`：页面图和OCR数据。
+- `app/data/gen_html.py`：自动生成页面及其缩略图的脚本，生成的`index.tmp` 可合并到`index.html`。
+- `app/html/template.html`：页面模板网页，此目录下其他网页和缩略图自动生成。
+
+## 单元测试文件
+
+- `tests/karma.conf.js`：单元测试配置文件。
+- `tests/html/template.html`：用于生成测试网页的模板文件。
+- `tests/html/*.html, *.js`：由 `gen_html.py` 生成的测试网页和OCR数据文件。
+- `tests/spec/*.js`：单元测试文件。
+
+## 运行
+
+- 在 WebStorm 等IDE中打开 `app/index.html`，然后选择某种浏览器启用和调试。
+- 或先运行 `npm i`，然后运行 `npm start` 在Chrome中调试。
+
+## 测试
+
+- 先运行 `npm i`
+- 运行 `npm test` 进行测试驱动开发
+- 运行 `npm run test-single-run` 执行一次单元测试并退出
+- 运行 `npm run jshint` 检查代码规范性
+
+## 增加版面样本
+
+在 `data` 下增加页面图和OCR结果文件(*.cut)，
+然后运行 `app/data/gen_html.py` 生成页面，将 `index.tmp` 内容合并到 `app/index.html`。
 
 ## 参考资料
 

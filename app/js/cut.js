@@ -361,6 +361,10 @@
       return info.char_id;
     },
 
+    getCurrentCharID: function() {
+      return state.edit && state.edit.data('cid');
+    },
+
     findCharById: function(id) {
       return data.chars.filter(function(box) {
         return box.char_id === id;

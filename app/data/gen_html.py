@@ -51,3 +51,4 @@ for fn in os.listdir(path):
 
 with open('index.tmp', 'w') as f:
     f.write(''.join(index) + '\n  </div>')
+    print(os.path.abspath('index.tmp'))

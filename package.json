@@ -1,0 +1,38 @@
+{
+  "name": "cut-proof",
+  "version": "0.0.1",
+  "description": "Proofread for character box of tripitaka",
+  "main": "index.js",
+  "scripts": {
+    "start": "http-server -a localhost -p 8000 -c-1 ./app",
+    "test": "karma start tests/karma.conf.js",
+    "test-single-run": "karma start tests/karma.conf.js --single-run",
+    "jshint": "jshint app/js/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tripitakas/cut-demo.git"
+  },
+  "keywords": [
+    "proofread",
+    "tripitaka"
+  ],
+  "authors": [
+    "Xiandu",
+    "Zhang Yungui"
+  ],
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/tripitakas/cut-demo/issues"
+  },
+  "homepage": "https://github.com/tripitakas/cut-demo#readme",
+  "devDependencies": {
+    "http-server": "^0.11.1",
+    "jasmine-core": "^3.2.1",
+    "karma": "^3.0.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-jasmine": "^1.1.2",
+    "karma-junit-reporter": "^1.2.0",
+    "karma-read-json": "^1.1.0"
+  }
+}

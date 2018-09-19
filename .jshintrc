@@ -1,0 +1,21 @@
+{
+  "strict": "global",
+  "-W097": false,
+  "globals": {
+    "document": false,
+    "window": false,
+    "Raphael": false,
+    "$": false,
+
+    "jasmine": false,
+    "describe": false,
+    "beforeEach": false,
+    "afterEach": false,
+    "it": false,
+    "expect": false,
+
+    "browser": false,
+    "element": false,
+    "by": false
+  }
+}
