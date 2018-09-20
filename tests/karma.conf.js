@@ -1,4 +1,5 @@
 //jshint strict: false
+// README: http://karma-runner.github.io/2.0/config/configuration-file.html
 module.exports = function(config) {
   config.set({
 
@@ -27,13 +28,21 @@ module.exports = function(config) {
     plugins: [
       'karma-chrome-launcher',
       'karma-jasmine',
-      'karma-junit-reporter'
+      'karma-mocha-reporter',
+      'karma-coverage'
     ],
 
-    junitReporter: {
-      outputFile: 'test_out/unit.xml',
-      suite: 'unit'
-    }
+    coverageReporter: {
+      type: 'lcov',
+      dir: 'coverage'
+    },
+
+    mochaReporter: {
+      showDiff: true
+    },
+
+    preprocessors: {'app/js/*.js': ['coverage']},
+    reporters: ['progress', 'coverage', 'mocha']
 
   });
 };
