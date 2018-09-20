@@ -263,6 +263,9 @@
 
       var mouseDown = function(e) {
         e.preventDefault();
+        if (e.button === 2) { // right button
+          return;
+        }
         state.downOrigin = state.down = getPoint(e);
 
         if (!state.edit || state.editHandle.index < 0) {

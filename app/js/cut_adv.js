@@ -24,15 +24,29 @@
       var chars = data.chars.filter(function(c) {
         return c.shape;
       });
-      var sizes, avgSize, boxes;
+      var sizes, widths, heights, mean, boxes;
 
       if (kind === 'large' || kind === 'small') {
         sizes = chars.map(function(c) {
           var r = c.shape.getBBox();
           return r.width * r.height;
         });
+        widths = chars.map(function(c) {
+          var r = c.shape.getBBox();
+          return r.width;
+        });
+        heights = chars.map(function(c) {
+          var r = c.shape.getBBox();
+          return r.height;
+        });
         sizes.sort();
-        avgSize = sizes[parseInt(sizes.length / 2)];
+        widths.sort();
+        heights.sort();
+        mean = {
+          size: sizes[parseInt(sizes.length / 2)],
+          width: widths[parseInt(widths.length / 2)],
+          height: heights[parseInt(heights.length / 2)]
+        };
       }
 
       this.clearHighlight();
@@ -42,13 +56,13 @@
           var degree = 0;
 
           if (kind === 'large') {
-            degree = r.width * r.height / avgSize - 1;
+            degree = Math.max(r.width * r.height / mean.size, r.width / mean.width, r.height / mean.height) - 1;
             if (degree < 0.5) {
               return;
             }
           }
           else if (kind === 'small') {
-            degree = avgSize / (r.width * r.height) - 1;
+            degree = Math.max(mean.size / (r.width * r.height), mean.width / r.width, mean.height / r.height) - 1;
             if (degree < 0.5) {
               return;
             }
@@ -74,7 +88,7 @@
           return data.paper.rect(r.x, r.y, r.width, r.height)
             .initZoom().setAttr({
               stroke: 'transparent',
-              fill: $.cut.rgb_a(fillColor, degree >= 0.9 ? 0.7 : degree >= 0.75 ? 0.5 : degree >= 0.6 ? 0.35 : 0.2)
+              fill: $.cut.rgb_a(fillColor, degree >= 0.9 ? 0.7 : degree >= 0.75 ? 0.5 : degree >= 0.6 ? 0.4 : 0.3)
             })
             .data('highlight', c.char_id);
         }
