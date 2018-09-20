@@ -45,6 +45,10 @@
           <button class="btn btn-default" id="hl-reset">取消高亮</button>
         </div>
       </div>
+      <div class="alert alert-info alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <strong>字框:</strong> <span id="box-info"></span>
+      </div>
       <div id="holder"></div>
     </div>
   </div>
@@ -60,6 +64,17 @@
 
 <script>
   $.getJSON('../data/ZC_10_30.cut', function(json) {
+    function round(v) {
+      return Math.round(v * 10) / 10;
+    }
+    $.cut.onBoxChanged(function(char, box, reason) {
+      if (reason === 'navigate') {
+        $('#box-info').text(!char.char_id ? '未选择' : [char.ch, char.char_id,
+          'x: ' + round(box.x), 'y: ' + round(box.y),
+          round(box.width) + ' x ' + round(box.height)].join(', '));
+      }
+    });
+
     var data = $.cut.create({
       width: 1200,
       height: 1703,

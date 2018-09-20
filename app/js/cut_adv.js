@@ -74,7 +74,7 @@
           return data.paper.rect(r.x, r.y, r.width, r.height)
             .initZoom().setAttr({
               stroke: 'transparent',
-              fill: $.cut.rgb_a(fillColor, degree >= 0.9 ? 0.7 : degree >= 0.7 ? 0.5 : 0.3)
+              fill: $.cut.rgb_a(fillColor, degree >= 0.9 ? 0.7 : degree >= 0.75 ? 0.5 : degree >= 0.6 ? 0.35 : 0.2)
             })
             .data('highlight', c.char_id);
         }

@@ -95,6 +95,19 @@
     return 'rgba(' + [c.r, c.g, c.b, a].join(',') + ')';
   }
 
+  function findCharById(id) {
+    return data.chars.filter(function(box) {
+      return box.char_id === id;
+    })[0];
+  }
+
+  function notifyChanged(el, reason) {
+    var char = el && findCharById(el.data('cid'));
+    data.boxObservers.forEach(function(func) {
+      func(char || {}, el && el.getBBox(), reason);
+    });
+  }
+
   var data = {
     normalColor: '#158815',                   // 正常字框的线色
     changedColor: '#C53433',                  // 改动字框的线色
@@ -111,7 +124,8 @@
     unit: 5,                                  // 微调量
     paper: null,                              // Raphael 画布
     image: null,                              // 背景图
-    chars: []                                 // OCR识别出的字框
+    chars: [],                                // OCR识别出的字框
+    boxObservers: []                          // 字框改变的回调函数
   };
 
   var state = {
@@ -210,6 +224,7 @@
         });
       }
       this.showHandles(state.edit, state.editHandle);
+      notifyChanged(state.edit, 'navigate');
     },
 
     create: function(p) {
@@ -259,6 +274,7 @@
         } else {
           self.hoverOut(state.edit);
           state.edit = null;
+          notifyChanged(state.edit, 'navigate');
         }
 
         if (!state.edit) {
@@ -298,8 +314,8 @@
           }
           else {
             self.cancelDrag();
+            self.switchCurrentBox(state.edit);
           }
-          self.switchCurrentBox(state.edit);
         }
       };
 
@@ -317,6 +333,8 @@
           (state.down ? mouseDrag : mouseHover)(e);
         });
 
+      var xMin = 1e5, yMin= 1e5, leftTop = null;
+
       p.chars.forEach(function(box) {
         box.shape = data.paper.rect(box.x, box.y, box.w, box.h)
           .attr({
@@ -326,11 +344,19 @@
           })
           .data('cid', box.char_id)
           .data('char', box.ch);
+
+        if (yMin > box.y - data.unit && xMin > box.x - data.unit) {
+          yMin = box.y;
+          xMin = box.x;
+          leftTop = box.shape;
+        }
       });
 
       data.width = p.width;
       data.height = p.height;
       data.chars = p.chars;
+      self.switchCurrentBox(leftTop);
+
       return data;
     },
 
@@ -357,6 +383,7 @@
       src.remove();
       state.originBox = null;
       state.edit = state.down = null;
+      notifyChanged(dst, 'changed');
       this.switchCurrentBox(dst);
 
       return info.char_id;
@@ -366,11 +393,11 @@
       return state.edit && state.edit.data('cid');
     },
 
-    findCharById: function(id) {
-      return data.chars.filter(function(box) {
-        return box.char_id === id;
-      })[0];
+    getCurrentChar: function() {
+      return state.edit && state.edit.data('char');
     },
+
+    findCharById: findCharById,
 
     findBoxByPoint: function(pt) {
       var ret = null, dist = 1e5, d, i, el;
@@ -401,6 +428,10 @@
       return ret;
     },
 
+    onBoxChanged: function(callback) {
+      data.boxObservers.push(callback);
+    },
+
     cancelDrag: function() {
       if (state.down) {
         if (state.originBox) {
@@ -426,11 +457,20 @@
     removeBox: function() {
       this.cancelDrag();
       if (state.edit) {
-        var info = this.findCharById(state.edit.data('cid'));
+        var el = state.edit;
+        var info = this.findCharById(el.data('cid'));
+        var next = this.navigate('down');
+
+        if (next === info.char_id) {
+          next = this.navigate('left');
+          if (next === info.char_id) {
+            this.navigate('right');
+          }
+        }
         info.shape = null;
-        state.edit.remove();
-        state.edit = null;
-        this.showHandles(state.edit, state.editHandle);
+        el.remove();
+        notifyChanged(el, 'removed');
+
         return info.char_id;
       }
     },
@@ -460,9 +500,11 @@
       }
       else {
         calc = function(box) {
-          // 排除垂直反方向的框：如果方向为up，则用当前框下边的y来过滤；如果方向为down，则用当前框上边的y来过滤
+          // 排除垂直反方向的框：如果方向为up，则用当前框下边的y来过滤；如果方向为down，则用当前框上边的y来过滤；不在同一列的则加大过滤差距
           var dy = direction === 'up' ? (box.y + box.height - cur.y - cur.height) : (box.y - cur.y);
-          if (direction === 'up' ? dy > -2 : dy < 2) {
+          var gap = box.x < cur.x ? cur.x - box.x - box.width : box.x - cur.x - cur.width;
+          var overCol = gap > box.width / 8;
+          if (direction === 'up' ? dy > (overCol ? -box.height / 2 : -2) : dy < (overCol ? box.height / 2 : 2)) {
             return invalid;
           }
           // 找中心点离得近的，优先找Y近的，不要跳到较远的其他列
