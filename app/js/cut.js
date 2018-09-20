@@ -96,6 +96,19 @@
     return 'rgba(' + [c.r, c.g, c.b, a].join(',') + ')';
   }
 
+  function findCharById(id) {
+    return data.chars.filter(function(box) {
+      return box.char_id === id;
+    })[0];
+  }
+
+  function notifyChanged(el, reason) {
+    var char = findCharById(el.data('cid'));
+    data.boxObservers.forEach(function(func) {
+      func(char, el.getBBox(), reason);
+    });
+  }
+
   var data = {
     normalColor: '#158815',                   // 正常字框的线色
     changedColor: '#C53433',                  // 改动字框的线色
@@ -112,7 +125,8 @@
     unit: 5,                                  // 微调量
     paper: null,                              // Raphael 画布
     image: null,                              // 背景图
-    chars: []                                 // OCR识别出的字框
+    chars: [],                                // OCR识别出的字框
+    boxObservers: []                          // 字框改变的回调函数
   };
 
   var state = {
@@ -209,6 +223,7 @@
         });
       }
       this.showHandles(state.edit, state.editHandle);
+      notifyChanged(state.edit, 'navigate');
     },
 
     create: function(p) {
@@ -258,6 +273,7 @@
         } else {
           self.hoverOut(state.edit);
           state.edit = null;
+          notifyChanged(state.edit, 'navigate');
         }
 
         if (!state.edit) {
@@ -297,8 +313,8 @@
           }
           else {
             self.cancelDrag();
+            self.switchCurrentBox(state.edit);
           }
-          self.switchCurrentBox(state.edit);
         }
       };
 
@@ -356,6 +372,7 @@
       src.remove();
       state.originBox = null;
       state.edit = state.down = null;
+      notifyChanged(dst, 'changed');
       this.switchCurrentBox(dst);
 
       return info.char_id;
@@ -365,11 +382,11 @@
       return state.edit && state.edit.data('cid');
     },
 
-    findCharById: function(id) {
-      return data.chars.filter(function(box) {
-        return box.char_id === id;
-      })[0];
+    getCurrentChar: function() {
+      return state.edit && state.edit.data('char');
     },
+
+    findCharById: findCharById,
 
     findBoxByPoint: function(pt) {
       var ret = null, dist = 1e5, d, i, el;
@@ -400,6 +417,10 @@
       return ret;
     },
 
+    onBoxChanged: function(callback) {
+      data.boxObservers.push(callback);
+    },
+
     cancelDrag: function() {
       if (state.down) {
         if (state.originBox) {
@@ -425,11 +446,20 @@
     removeBox: function() {
       this.cancelDrag();
       if (state.edit) {
-        var info = this.findCharById(state.edit.data('cid'));
+        var el = state.edit;
+        var info = this.findCharById(el.data('cid'));
+        var next = this.navigate('down');
+
+        if (next === info.char_id) {
+          next = this.navigate('left');
+          if (next === info.char_id) {
+            this.navigate('right');
+          }
+        }
         info.shape = null;
-        state.edit.remove();
-        state.edit = null;
-        this.showHandles(state.edit, state.editHandle);
+        el.remove();
+        notifyChanged(el, 'removed');
+
         return info.char_id;
       }
     },

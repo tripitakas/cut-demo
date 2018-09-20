@@ -38,6 +38,10 @@
           <button class="btn btn-default zoom-btn">5x</button>
         </div>
       </div>
+      <div class="alert alert-info alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <strong>字框:</strong> <span id="box-info"></span>
+      </div>
       <div id="holder"></div>
     </div>
   </div>
@@ -70,6 +74,17 @@
     });
     $('#switchBox').click(function() {
       $.cut.toggleBox();
+    });
+
+    function round(v) {
+      return Math.round(v * 10) / 10;
+    }
+    $.cut.onBoxChanged(function(char, box, reason) {
+      if (reason === 'navigate') {
+        $('#box-info').text([char.ch, char.char_id,
+          'x: ' + round(box.x), 'y: ' + round(box.y),
+          round(box.width) + ' x ' + round(box.height)].join(', '));
+      }
     });
   });
 </script>
