@@ -103,9 +103,9 @@
   }
 
   function notifyChanged(el, reason) {
-    var char = findCharById(el.data('cid'));
+    var char = el && findCharById(el.data('cid'));
     data.boxObservers.forEach(function(func) {
-      func(char, el.getBBox(), reason);
+      func(char || {}, el && el.getBBox(), reason);
     });
   }
 
@@ -332,6 +332,8 @@
           (state.down ? mouseDrag : mouseHover)(e);
         });
 
+      var xMin = 1e5, yMin= 1e5, leftTop = null;
+
       p.chars.forEach(function(box) {
         box.shape = data.paper.rect(box.x, box.y, box.w, box.h)
           .attr({
@@ -341,11 +343,19 @@
           })
           .data('cid', box.char_id)
           .data('char', box.ch);
+
+        if (yMin > box.y - data.unit && xMin > box.x - data.unit) {
+          yMin = box.y;
+          xMin = box.x;
+          leftTop = box.shape;
+        }
       });
 
       data.width = p.width;
       data.height = p.height;
       data.chars = p.chars;
+      self.switchCurrentBox(leftTop);
+
       return data;
     },
 
@@ -489,9 +499,11 @@
       }
       else {
         calc = function(box) {
-          // 排除垂直反方向的框：如果方向为up，则用当前框下边的y来过滤；如果方向为down，则用当前框上边的y来过滤
+          // 排除垂直反方向的框：如果方向为up，则用当前框下边的y来过滤；如果方向为down，则用当前框上边的y来过滤；不在同一列的则加大过滤差距
           var dy = direction === 'up' ? (box.y + box.height - cur.y - cur.height) : (box.y - cur.y);
-          if (direction === 'up' ? dy > -2 : dy < 2) {
+          var gap = box.x < cur.x ? cur.x - box.x - box.width : box.x - cur.x - cur.width;
+          var overCol = gap > box.width / 8;
+          if (direction === 'up' ? dy > (overCol ? -box.height / 2 : -2) : dy < (overCol ? box.height / 2 : 2)) {
             return invalid;
           }
           // 找中心点离得近的，优先找Y近的，不要跳到较远的其他列

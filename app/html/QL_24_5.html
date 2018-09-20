@@ -56,6 +56,17 @@
 
 <script>
   $.getJSON('../data/QL_24_5.cut', function(json) {
+    function round(v) {
+      return Math.round(v * 10) / 10;
+    }
+    $.cut.onBoxChanged(function(char, box, reason) {
+      if (reason === 'navigate') {
+        $('#box-info').text(!char.char_id ? '未选择' : [char.ch, char.char_id,
+          'x: ' + round(box.x), 'y: ' + round(box.y),
+          round(box.width) + ' x ' + round(box.height)].join(', '));
+      }
+    });
+
     var data = $.cut.create({
       width: 1200,
       height: 1678,
@@ -74,17 +85,6 @@
     });
     $('#switchBox').click(function() {
       $.cut.toggleBox();
-    });
-
-    function round(v) {
-      return Math.round(v * 10) / 10;
-    }
-    $.cut.onBoxChanged(function(char, box, reason) {
-      if (reason === 'navigate') {
-        $('#box-info').text([char.ch, char.char_id,
-          'x: ' + round(box.x), 'y: ' + round(box.y),
-          round(box.width) + ' x ' + round(box.height)].join(', '));
-      }
     });
   });
 </script>

@@ -37,12 +37,8 @@ module.exports = function(config) {
       dir: 'coverage'
     },
 
-    mochaReporter: {
-      showDiff: true
-    },
-
     preprocessors: {'app/js/*.js': ['coverage']},
-    reporters: ['progress', 'coverage', 'mocha']
+    reporters: ['coverage', 'mocha']
 
   });
 };
