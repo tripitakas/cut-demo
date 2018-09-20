@@ -1,4 +1,3 @@
-/* global $, Raphael */
 (function() {
   'use strict';
 
@@ -131,6 +130,8 @@
   $.cut = {
     data: data,
     state: state,
+    getDistance: getDistance,
+    rgb_a: rgb_a,
 
     showHandles: function(el, handle) {
       var i, pt, r;

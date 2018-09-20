@@ -49,6 +49,7 @@
 
 <script src="../js/cut.js"></script>
 <script src="../js/cut_keys.js"></script>
+<script src="../js/cut_adv.js"></script>
 
 <script>
   $.getJSON('../data/QS_21_458.cut', function(json) {
@@ -71,6 +72,19 @@
     $('#switchBox').click(function() {
       $.cut.toggleBox();
     });
+    $('#hl-large').click(function() {
+      $.cut.highlightBoxes('large');
+    });
+    $('#hl-small').click(function() {
+      $.cut.highlightBoxes('small');
+    });
+    $('#hl-all').click(function() {
+      $.cut.highlightBoxes('all');
+    });
+    $('#hl-overlap').click(function() {
+      $.cut.highlightBoxes('overlap');
+    });
+
   });
 </script>
 
