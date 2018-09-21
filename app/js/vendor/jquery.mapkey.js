@@ -43,7 +43,6 @@ Enjoy!
       var $this = $(this);
       // build element specific options
       var o = $.meta ? $.extend({}, opts, $this.data()) : opts;
-      var t = "";
       var action;
       
       //check for a trigger

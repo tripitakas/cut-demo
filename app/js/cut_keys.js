@@ -94,6 +94,22 @@
         self.setRatio(5);
       });
 
+      // +/- 逐级缩放，每次放大原图的50%、或缩小原图的10%
+      function add() {
+        if (self.data.ratio < 5) {
+          self.setRatio(self.data.ratio * 1.5);
+        }
+      }
+      function sub() {
+        if (self.data.ratio > 0.5) {
+          self.setRatio(self.data.ratio * 0.9);
+        }
+      }
+      on('add', add);
+      on('=', add);
+      on('subtract', sub);
+      on('-', sub);
+
       // shift + 5~9 页面缩放
       on('shift+5', function() {
         self.setRatio(0.5);
