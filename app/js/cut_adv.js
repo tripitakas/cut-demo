@@ -20,7 +20,7 @@
       delete data.highlight;
     },
 
-    highlightBoxes: function(kind) {
+    highlightBoxes: function(kind, test) {
       var chars = data.chars.filter(function(c) {
         return c.shape;
       });
@@ -29,7 +29,9 @@
       if (kind === 'large' || kind === 'small') {
         sizes = chars.map(function(c) {
           var r = c.shape.getBBox();
-          return r.width * r.height;
+          return c.ch !== '一' && r.width * r.height;
+        }).filter(function(c) {
+          return c;
         });
         sizes.sort();
         mean = sizes[parseInt(sizes.length / 2)];
@@ -49,7 +51,7 @@
           }
           else if (kind === 'small') {
             degree = mean / (r.width * r.height) - 1;
-            if (degree < 0.5) {
+            if (degree < 0.5 || c.ch === '一') {
               return;
             }
           }
@@ -61,7 +63,7 @@
           }
           else if (kind === 'flat') {
             degree = r.width / r.height - 1;
-            if (degree < 0.5) {
+            if (degree < 0.5 || c.ch === '一') {
               return;
             }
           }
@@ -83,7 +85,7 @@
               }
             }
           }
-          return data.paper.rect(r.x, r.y, r.width, r.height)
+          return test ? [degree, c.char_id] : data.paper.rect(r.x, r.y, r.width, r.height)
             .initZoom().setAttr({
               stroke: 'transparent',
               fill: $.cut.rgb_a(fillColor,

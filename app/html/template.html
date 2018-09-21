@@ -88,12 +88,17 @@
     $('#switchBox').click(function() {
       $.cut.toggleBox();
     });
+    $('.hl-btn > button').each(function(i, btn) {
+      var type = btn.getAttribute('id').replace(/^.*-/, '');
+      var boxes = $.cut.highlightBoxes(type);
+      $(btn).find('.count').text('(' + boxes.length + ')');
+    });
     $('.hl-btn > button').click(function() {
       var type = this.getAttribute('id').replace(/^.*-/, '');
       var $count = $(this).find('.count');
 
       $('.hl-btn .count').text('');
-      if (hlType) {
+      if (hlType === type) {
         hlType = null;
         $.cut.clearHighlight();
       } else {
