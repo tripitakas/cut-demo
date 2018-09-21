@@ -62,9 +62,17 @@
     }
     $.cut.onBoxChanged(function(char, box, reason) {
       if (reason === 'navigate') {
-        $('#box-info').text(!char.char_id ? '未选择' : [char.ch, char.char_id,
+        var boxes = hlType && $.cut.highlightBoxes(hlType, true) || [];
+        var hi = boxes.filter(function(b) {
+          return b[0] === char.char_id;
+        })[0];
+
+        $('#box-info').text(!char.char_id ? '未选择' : [
+          char.ch, char.char_id,
           'x: ' + round(box.x), 'y: ' + round(box.y),
-          round(box.width) + ' x ' + round(box.height)].join(', '));
+          round(box.width) + ' x ' + round(box.height),
+          hi && hlType + ': ' + round(hi[1]) || 0
+        ].filter(function(t) { return t; }).join(', '));
       }
     });
 
@@ -90,14 +98,11 @@
     });
     $('.hl-btn > button').each(function(i, btn) {
       var type = btn.getAttribute('id').replace(/^.*-/, '');
-      var boxes = $.cut.highlightBoxes(type);
+      var boxes = $.cut.highlightBoxes(type, true);
       $(btn).find('.count').text('(' + boxes.length + ')');
     });
     $('.hl-btn > button').click(function() {
       var type = this.getAttribute('id').replace(/^.*-/, '');
-      var $count = $(this).find('.count');
-
-      $('.hl-btn .count').text('');
       if (hlType === type) {
         hlType = null;
         $.cut.clearHighlight();

@@ -24,7 +24,7 @@
       var chars = data.chars.filter(function(c) {
         return c.shape;
       });
-      var sizes, mean, boxes;
+      var sizes, mean, boxes, highlight;
 
       if (kind === 'large' || kind === 'small') {
         sizes = chars.map(function(c) {
@@ -37,8 +37,10 @@
         mean = sizes[parseInt(sizes.length / 2)];
       }
 
-      this.clearHighlight();
-      data.highlight = chars.map(function(c) {
+      if (!test) {
+        this.clearHighlight();
+      }
+      highlight = chars.map(function(c) {
         if (c.shape) {
           var r = c.shape.getBBox();
           var degree = 0;
@@ -85,7 +87,7 @@
               }
             }
           }
-          return test ? [degree, c.char_id] : data.paper.rect(r.x, r.y, r.width, r.height)
+          return test ? [c.char_id, degree] : data.paper.rect(r.x, r.y, r.width, r.height)
             .initZoom().setAttr({
               stroke: 'transparent',
               fill: $.cut.rgb_a(fillColor,
@@ -98,7 +100,10 @@
         }
       }).filter(function(box) { return box; });
 
-      return data.highlight;
+      if (!test) {
+        data.highlight = highlight;
+      }
+      return highlight;
     }
   });
 }());
