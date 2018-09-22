@@ -8,11 +8,13 @@ body {
     padding-top: 80px;
     padding-left: 10%;
     margin-bottom: 40px;
+    min-width: 500px;
 }
 
-.cut-area .buttons {
-    padding-left: 4px;
-    margin-bottom: 10px;
+@media (min-width: 768px) {
+    #top-nav .buttons {
+        margin-top: 8px;
+    }
 }
 
 #holder {

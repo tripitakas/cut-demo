@@ -21,26 +21,26 @@
   <div class="navbar-header">
     <a class="navbar-brand" href="../">切分校对示例 <span class="glyphicon glyphicon-th" aria-hidden="true"></span></a>
   </div>
+  <div class="buttons">
+    <button class="btn btn-default" id="switchBox">字框</button>
+    <button class="btn btn-default" id="switchImg">图片</button>
+    <div class="btn-group hl-btn">
+      <button class="btn btn-default" id="hl-all">所有<sup class="count"></sup></button>
+      <button class="btn btn-default" id="hl-large">大框<sup class="count"></sup></button>
+      <button class="btn btn-default" id="hl-small">小框<sup class="count"></sup></button>
+      <button class="btn btn-default" id="hl-narrow">窄框<sup class="count"></sup></button>
+      <button class="btn btn-default" id="hl-flat">扁框<sup class="count"></sup></button>
+      <button class="btn btn-default" id="hl-overlap">重叠<sup class="count"></sup></button>
+    </div>
+  </div>
 </div>
 
 <div id="body-content">
   <div id="app">
     <div class="cut-area">
-      <div class="buttons">
-        <button class="btn btn-default" id="switchBox">显隐字框</button>
-        <button class="btn btn-default" id="switchImg">显隐图片</button>
-        <div class="btn-group hl-btn">
-          <button class="btn btn-default" id="hl-large">高亮大框<span class="count"></span></button>
-          <button class="btn btn-default" id="hl-small">高亮小框<span class="count"></span></button>
-          <button class="btn btn-default" id="hl-narrow">高亮窄框<span class="count"></span></button>
-          <button class="btn btn-default" id="hl-flat">高亮扁框<span class="count"></span></button>
-          <button class="btn btn-default" id="hl-all">高亮所有框<span class="count"></span></button>
-          <button class="btn btn-default" id="hl-overlap">高亮重叠框<span class="count"></span></button>
-        </div>
-      </div>
       <div class="alert alert-info alert-dismissible" role="alert">
         <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <strong>字框:</strong> <span id="box-info"></span>
+        <span id="box-info"></span>
       </div>
       <div id="holder"></div>
     </div>
@@ -69,10 +69,16 @@
 
         $('#box-info').text(!char.char_id ? '未选择' : [
           char.ch, char.char_id,
-          'x: ' + round(box.x), 'y: ' + round(box.y),
-          round(box.width) + ' x ' + round(box.height),
+          round(box.x), round(box.y),
+          round(box.width) + 'x' + round(box.height),
           hi && hlType + ': ' + round(hi[1]) || 0
         ].filter(function(t) { return t; }).join(', '));
+      }
+      else {
+        showHighLightCount();
+        if (hlType) {
+          $.cut.highlightBoxes(hlType);
+        }
       }
     });
 
@@ -96,11 +102,16 @@
     $('#switchBox').click(function() {
       $.cut.toggleBox();
     });
-    $('.hl-btn > button').each(function(i, btn) {
-      var type = btn.getAttribute('id').replace(/^.*-/, '');
-      var boxes = $.cut.highlightBoxes(type, true);
-      $(btn).find('.count').text('(' + boxes.length + ')');
-    });
+    function showHighLightCount() {
+      $('.hl-btn > button').each(function(i, btn) {
+        if (i > 0) {
+          var type = btn.getAttribute('id').replace(/^.*-/, '');
+          var boxes = $.cut.highlightBoxes(type, true);
+          $(btn).find('.count').text(boxes.length);
+        }
+      });
+    }
+    showHighLightCount();
     $('.hl-btn > button').click(function() {
       var type = this.getAttribute('id').replace(/^.*-/, '');
       if (hlType === type) {
@@ -108,8 +119,7 @@
         $.cut.clearHighlight();
       } else {
         hlType = type;
-        var boxes = $.cut.highlightBoxes(type);
-        $(this).find('.count').text('(' + boxes.length + ')');
+        $.cut.highlightBoxes(type);
       }
     });
 

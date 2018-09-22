@@ -170,7 +170,7 @@
     },
 
     activateHandle: function(el, handle, pt) {
-      var dist = handle.fill ? 50 : 8;
+      var dist = handle.fill ? 200 : 8;
       var d, i;
 
       handle.index = -1;
@@ -208,20 +208,51 @@
       }
     },
     
-    switchCurrentBox: function(box) {
+    switchCurrentBox: function(el) {
       this.hoverOut(state.hover);
       this.hoverOut(state.edit);
       state.hover = null;
       this.showHandles(state.hover, state.hoverHandle);
 
-      state.edit = box;
-      if (box) {
-        state.editStroke = box.attr('stroke');
-        state.editHandle.fill = box.attr('fill');
-        box.attr({
+      state.edit = el;
+      if (el) {
+        state.editStroke = el.attr('stroke');
+        state.editHandle.fill = el.attr('fill');
+        el.attr({
           stroke: rgb_a(data.changedColor, data.boxOpacity),
           fill: rgb_a(data.hoverFill, 0.4)
         });
+
+        var bound = data.holder.getBoundingClientRect();
+        var box = el.getBBox();
+        var win = $(window);
+        var st = win.scrollTop(), sl = win.scrollLeft(), w = win.innerWidth(), h = win.innerHeight();
+        var scroll = 0;
+
+        var offsetUp = box.y + box.height + bound.y - h + 10;
+        var offsetDown = box.y + bound.y + (box.y - st);
+        var offsetLeft = box.x + box.width + bound.x - w + 10;
+        var offsetRight = box.x + bound.x + (box.x - sl);
+
+        if (offsetUp > 0) {
+          st += offsetUp;
+          scroll++;
+        }
+        else if (offsetDown < 0) {
+          st += offsetDown;
+          scroll++;
+        }
+        if (offsetLeft > 0) {
+          sl += offsetLeft;
+          scroll++;
+        }
+        else if (offsetRight < 0) {
+          sl += offsetRight;
+          scroll++;
+        }
+        if (scroll) {
+          $('html,body').animate({scrollTop: st, scrollLeft: sl}, 500);
+        }
       }
       this.showHandles(state.edit, state.editHandle);
       notifyChanged(state.edit, 'navigate');

@@ -76,6 +76,7 @@
             if (boxes.length < 1) {
               return;
             }
+            degree = 0.5;
             if (boxes.filter(function(c2) {
                 return isOverlap(r, c2.shape.getBBox(), 5);
               }).length) {
@@ -84,6 +85,11 @@
                   return isOverlap(r, c2.shape.getBBox(), 10);
                 }).length) {
                 degree = 0.9;
+                if (boxes.filter(function(c2) {
+                    return isOverlap(r, c2.shape.getBBox(), 15);
+                  }).length) {
+                  degree = 1.1;
+                }
               }
             }
           }
@@ -92,9 +98,9 @@
               stroke: 'transparent',
               fill: $.cut.rgb_a(fillColor,
                 degree >= 1.05 ? 0.8 :
-                degree >= 0.90 ? 0.7 :
+                degree >= 0.90 ? 0.65 :
                 degree >= 0.75 ? 0.5 :
-                degree >= 0.60 ? 0.4 : 0.3)
+                degree >= 0.60 ? 0.35 : 0.25)
             })
             .data('highlight', c.char_id);
         }
