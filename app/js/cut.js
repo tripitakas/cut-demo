@@ -396,11 +396,11 @@
     },
 
     _changeBox: function(src, dst) {
-      if (!src || !dst) {
+      if (!dst) {
         return;
       }
 
-      var info = this.findCharById(src.data('cid')) || {};
+      var info = src && this.findCharById(src.data('cid')) || {};
 
       if (!info.char_id) {
         for (var i = 1; i < 999; i++) {
@@ -414,8 +414,10 @@
       dst.data('cid', info.char_id).data('char', dst.ch);
       info.shape = dst;
 
-      dst.insertBefore(src);
-      src.remove();
+      if (src) {
+        dst.insertBefore(src);
+        src.remove();
+      }
       state.originBox = null;
       state.edit = state.down = null;
       notifyChanged(dst, 'changed');
@@ -468,25 +470,24 @@
     },
 
     cancelDrag: function() {
-      if (state.down) {
-        if (state.originBox) {
-          state.edit.remove();
-          state.edit = state.originBox;
-          state.edit.attr('opacity', 1);
-          delete state.originBox;
-        }
-        if (state.edit && state.edit.getBBox().width < 1) {
-          state.edit.remove();
-          state.edit = null;
-        }
-        else if (state.edit) {
-          state.edit.attr({
-            stroke: state.editStroke,
-            fill: state.editHandle.fill
-          });
-        }
-        state.down = null;
+      if (state.originBox) {
+        state.edit.remove();
+        state.edit = state.originBox;
+        state.edit.attr('opacity', 1);
+        delete state.originBox;
       }
+      if (state.edit && state.edit.getBBox().width < 1) {
+        state.edit.remove();
+        state.edit = null;
+      }
+      else if (state.edit && state.editHandle.fill) {
+        state.edit.attr({
+          stroke: state.editStroke,
+          fill: state.editHandle.fill
+        });
+        state.editHandle.fill = 0;
+      }
+      state.down = null;
     },
 
     removeBox: function() {
@@ -507,6 +508,17 @@
         notifyChanged(el, 'removed');
 
         return info.char_id;
+      }
+    },
+
+    addBox: function() {
+      this.cancelDrag();
+      var box = state.edit && state.edit.getBBox();
+      if (box) {
+        var dx = box.width / 2, dy = box.height / 2;
+        var newBox = createRect({x: box.x + dx, y: box.y + dy},
+          {x: box.x + box.width + dx, y: box.y + box.height + dy});
+        return this._changeBox(null, newBox);
       }
     },
 

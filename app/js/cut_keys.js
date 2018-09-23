@@ -154,6 +154,14 @@
       on('ctrl+6', function() {
         self.highlightBoxes('overlap');
       });
+
+      // insert/ctrl+n 增加字框
+      on('insert', function() {
+        self.addBox();
+      });
+      on('ctrl+n', function() {
+        self.addBox();
+      });
     },
 
     switchNextHighlightBox: function(relative) {
