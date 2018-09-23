@@ -214,6 +214,7 @@
       state.hover = null;
       this.showHandles(state.hover, state.hoverHandle);
 
+      el = typeof el === 'string' ? (this.findCharById(el) || {}).shape : el;
       state.edit = el;
       if (el) {
         state.editStroke = el.attr('stroke');

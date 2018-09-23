@@ -126,6 +126,47 @@
       on('shift+9', function() {
         self.setRatio(0.9);
       });
+
+      // <、>: 在高亮字框中跳转
+      on(',', function() {
+        self.switchNextHighlightBox(1);
+      });
+      on('.', function() {
+        self.switchNextHighlightBox(-1);
+      });
+
+      // ctrl + 1~6 高亮显示：所有、大框、小框、窄框、扁框、重叠
+      on('ctrl+1', function() {
+        self.highlightBoxes('all');
+      });
+      on('ctrl+2', function() {
+        self.highlightBoxes('large');
+      });
+      on('ctrl+3', function() {
+        self.highlightBoxes('small');
+      });
+      on('ctrl+4', function() {
+        self.highlightBoxes('narrow');
+      });
+      on('ctrl+5', function() {
+        self.highlightBoxes('flat');
+      });
+      on('ctrl+6', function() {
+        self.highlightBoxes('overlap');
+      });
+    },
+
+    switchNextHighlightBox: function(relative) {
+      var self = this, cid = self.getCurrentCharID();
+      var n = (self.data.highlight || []).length;
+      if (n > 0 && n < self.data.chars.length) {
+        var item = self.data.highlight.filter(function(el) {
+          return el.data('highlight') === cid;
+        })[0];
+        var index = self.data.highlight.indexOf(item);
+        var el = self.data.highlight[index < 0 ? 0 : (index + relative + n) % n];
+        return self.switchCurrentBox(el.data('highlight'));
+      }
     }
   });
 }());
