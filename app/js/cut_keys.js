@@ -129,10 +129,10 @@
 
       // <、>: 在高亮字框中跳转
       on(',', function() {
-        self.switchNextHighlightBox(1);
+        self.switchNextHighlightBox(-1);
       });
       on('.', function() {
-        self.switchNextHighlightBox(-1);
+        self.switchNextHighlightBox(1);
       });
 
       // ctrl + 1~6 高亮显示：所有、大框、小框、窄框、扁框、重叠

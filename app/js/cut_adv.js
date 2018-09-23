@@ -107,6 +107,11 @@
       }).filter(function(box) { return box; });
 
       if (!test) {
+        highlight.sort(function(a, b) {
+          a = a.getBBox();
+          b = b.getBBox();
+          return Math.abs(a.x - b.x) < Math.min(a.width, b.width) / 2 ? a.y - b.y : a.x - b.x;
+        });
         data.highlight = highlight;
       }
       return highlight;
