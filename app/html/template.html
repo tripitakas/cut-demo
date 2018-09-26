@@ -51,9 +51,9 @@
 <script src="../js/vendor/raphael.zoom.js"></script>
 <script src="../js/vendor/jquery.mapkey.js"></script>
 
-<script src="../js/cut.js"></script>
-<script src="../js/cut_keys.js"></script>
-<script src="../js/cut_adv.js"></script>
+<script src="../js/cut.js?v=9261"></script>
+<script src="../js/cut_keys.js?v=9261"></script>
+<script src="../js/cut_adv.js?v=9261"></script>
 
 <script>
   $.getJSON('../data/GL_79_4_7.cut', function(json) {
@@ -61,6 +61,7 @@
       return Math.round(v * 10) / 10;
     }
     $.cut.onBoxChanged(function(char, box, reason) {
+      var hlType = $.cut.data.hlType;
       if (reason === 'navigate') {
         var boxes = hlType && $.cut.highlightBoxes(hlType, true) || [];
         var hi = boxes.filter(function(b) {
@@ -90,7 +91,6 @@
       image: '../data/GL_79_4_7.jpg',
       chars: json.char_data
     });
-    var hlType;
 
     $.cut.bindKeys();
     $('.zoom-btn').click(function() {
@@ -114,13 +114,7 @@
     showHighLightCount();
     $('.hl-btn > button').click(function() {
       var type = this.getAttribute('id').replace(/^.*-/, '');
-      if (hlType === type) {
-        hlType = null;
-        $.cut.clearHighlight();
-      } else {
-        hlType = type;
-        $.cut.highlightBoxes(type);
-      }
+      $.cut.switchHighlightBoxes(type);
     });
 
   });

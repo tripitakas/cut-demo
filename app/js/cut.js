@@ -138,7 +138,9 @@
     edit: null,                               // 当前编辑的字框
     originBox: null,                          // 改动前的字框
     editStroke: 0,                            // 当前编辑字框原来的线色
-    editHandle: {handles: [], index: -1, fill: 0} // 当前编辑字框的控制点
+    editHandle: {handles: [], index: -1, fill: 0}, // 当前编辑字框的控制点
+
+    scrolling: []                             // 防止多余滚动
   };
 
   $.cut = {
@@ -237,7 +239,13 @@
         scroll++;
       }
       if (scroll) {
-        $('html,body').animate({scrollTop: st, scrollLeft: sl}, 500);
+        var tick = state.scrollTick = (state.scrollTick || 0) + 1;
+        state.scrolling.push(tick);
+        $('html,body').animate({scrollTop: st, scrollLeft: sl}, 500, function() {
+          if (state.scrolling.indexOf(tick) >= 0) {
+            state.scrolling.splice(state.scrolling.indexOf(tick), 1);
+          }
+        });
       }
     },
     
@@ -529,6 +537,9 @@
       var i, cur, chars, calc, invalid = 1e5;
       var minDist = invalid, d, ret;
 
+      if (state.scrolling.length > 1) {
+        return;
+      }
       chars = data.chars.filter(function(c) { return c.shape; });
       ret = cur = state.edit || state.hover || (chars[chars.length - 1] || {}).shape;
       cur = cur && cur.getBBox();

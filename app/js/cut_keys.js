@@ -137,22 +137,22 @@
 
       // ctrl + 1~6 高亮显示：所有、大框、小框、窄框、扁框、重叠
       on('ctrl+1', function() {
-        self.highlightBoxes('all');
+        self.switchHighlightBoxes('all');
       });
       on('ctrl+2', function() {
-        self.highlightBoxes('large');
+        self.switchHighlightBoxes('large');
       });
       on('ctrl+3', function() {
-        self.highlightBoxes('small');
+        self.switchHighlightBoxes('small');
       });
       on('ctrl+4', function() {
-        self.highlightBoxes('narrow');
+        self.switchHighlightBoxes('narrow');
       });
       on('ctrl+5', function() {
-        self.highlightBoxes('flat');
+        self.switchHighlightBoxes('flat');
       });
       on('ctrl+6', function() {
-        self.highlightBoxes('overlap');
+        self.switchHighlightBoxes('overlap');
       });
 
       // insert/ctrl+n 增加字框
@@ -162,6 +162,16 @@
       on('ctrl+n', function() {
         self.addBox();
       });
+    },
+
+    switchHighlightBoxes: function(type) {
+      if (this.data.hlType === type) {
+        this.data.hlType = null;
+        this.clearHighlight();
+      } else {
+        this.data.hlType = type;
+        this.highlightBoxes(type);
+      }
     },
 
     switchNextHighlightBox: function(relative) {
