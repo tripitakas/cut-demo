@@ -1,3 +1,8 @@
+/*
+ * cut.js
+ *
+ * Date: 2018-9-27
+ */
 (function() {
   'use strict';
 
@@ -158,7 +163,7 @@
       }
       handle.handles.length = 0;
 
-      if (el) {
+      if (el && !state.readonly) {
         for (i = 0; i < 8; i++) {
           pt = getHandle(el, i);
           r = data.paper.rect(pt.x - size, pt.y - size, size * 2, size * 2)
@@ -210,42 +215,59 @@
       }
     },
 
-    scrollToVisible: function(el) {
-      var bound = data.holder.getBoundingClientRect();
-      var box = el.getBBox();
-      var win = $(window);
+    scrollToVisible: function(el, ms) {
+      var self = this;
+      var bound = data.holder.getBoundingClientRect();  // 画布相对于视口的坐标范围，减去滚动原点
+      var box = el.getBBox();                           // 字框相对于画布的坐标范围
+      var win = data.scrollContainer || $(window);      // 有滚动条的画布容器窗口
       var st = win.scrollTop(), sl = win.scrollLeft(), w = win.innerWidth(), h = win.innerHeight();
       var scroll = 0;
 
-      var offsetUp = box.y + box.height + bound.y - h + 10;
-      var offsetDown = box.y + bound.y + (box.y - st);
-      var offsetLeft = box.x + box.width + bound.x - w + 10;
-      var offsetRight = box.x + bound.x + (box.x - sl);
+      if (data.scrollContainer) {
+        var parentRect = data.scrollContainer[0].getBoundingClientRect();
+        bound.y -= parentRect.y;
+        bound.x -= parentRect.x;
+      }
 
-      if (offsetUp > 0) {
-        st += offsetUp;
+      var boxBottom = box.y + box.height + bound.y + 10 + st;
+      var boxTop = box.y + bound.y - 10 + st;
+      var boxRight = box.x + box.width + bound.x + 10 + sl;
+      var boxLeft = box.x + bound.x - 10 + sl;
+
+      // 字框的下边缘在可视区域下面，就向上滚动
+      if (boxBottom - st > h) {
+        st = boxBottom - h;
         scroll++;
       }
-      else if (offsetDown < 0) {
-        st += offsetDown;
+      // 字框的上边缘在可视区域上面，就向下滚动
+      else if (boxTop < st) {
+        st = boxTop;
         scroll++;
       }
-      if (offsetLeft > 0) {
-        sl += offsetLeft;
+      // 字框的右边缘在可视区域右侧，就向左滚动
+      if (boxRight - sl > w) {
+        sl = boxRight - w;
         scroll++;
       }
-      else if (offsetRight < 0) {
-        sl += offsetRight;
+      // 字框的左边缘在可视区域左面，就向右滚动
+      else if (boxLeft < sl) {
+        sl = boxLeft;
         scroll++;
       }
       if (scroll) {
-        var tick = state.scrollTick = (state.scrollTick || 0) + 1;
-        state.scrolling.push(tick);
-        $('html,body').animate({scrollTop: st, scrollLeft: sl}, 500, function() {
-          if (state.scrolling.indexOf(tick) >= 0) {
-            state.scrolling.splice(state.scrolling.indexOf(tick), 1);
-          }
-        });
+        state.scrolling.push(el);
+        if (state.scrolling.length === 1 || ms) {
+          (data.scrollContainer || $('html,body')).animate(
+            {scrollTop: st, scrollLeft: sl}, ms || 500,
+            function() {
+              var n = state.scrolling.length;
+              el = n > 1 && state.scrolling[n - 1];
+              state.scrolling.length = 0;
+              if (el) {
+                self.scrollToVisible(el, 300);
+              }
+            });
+        }
       }
     },
     
@@ -264,6 +286,7 @@
           stroke: rgb_a(data.changedColor, data.boxOpacity),
           fill: rgb_a(data.hoverFill, 0.4)
         });
+        $(el.node).toggle(true);
         this.scrollToVisible(el);
       }
       this.showHandles(state.edit, state.editHandle);
@@ -372,29 +395,36 @@
       data.paper.rect(0, 0, p.width, p.height)
         .attr({'stroke': 'transparent', fill: data.boxFill});
 
-      $(data.holder)
-        .mousedown(mouseDown)
-        .mouseup(mouseUp)
-        .mousemove(function(e) {
-          (state.down ? mouseDrag : mouseHover)(e);
-        });
+      state.readonly = p.readonly;
+      data.scrollContainer = p.scrollContainer && $(p.scrollContainer);
+      if (!p.readonly) {
+        $(data.holder)
+          .mousedown(mouseDown)
+          .mouseup(mouseUp)
+          .mousemove(function(e) {
+            (state.down ? mouseDrag : mouseHover)(e);
+          });
+      }
 
       var xMin = 1e5, yMin= 1e5, leftTop = null;
 
-      p.chars.forEach(function(box) {
-        box.shape = data.paper.rect(box.x, box.y, box.w, box.h)
+      p.chars.forEach(function(b) {
+        if (b.block_no && b.line_no && b.char_no) {
+          b.char_id = (b.block_no * 1000 + b.line_no) + 'n' + (b.char_no > 9 ? b.char_no : '0' + b.char_no);
+        }
+        b.shape = data.paper.rect(b.x, b.y, b.w, b.h)
           .attr({
             stroke: rgb_a(data.normalColor, data.boxOpacity),
             'stroke-width': 1.5,
             // fill: data.boxFill
           })
-          .data('cid', box.char_id)
-          .data('char', box.ch);
+          .data('cid', b.char_id)
+          .data('char', b.ch);
 
-        if (yMin > box.y - data.unit && xMin > box.x - data.unit) {
-          yMin = box.y;
-          xMin = box.x;
-          leftTop = box.shape;
+        if (yMin > b.y - data.unit && xMin > b.x - data.unit) {
+          yMin = b.y;
+          xMin = b.x;
+          leftTop = b.shape;
         }
       });
 
@@ -446,6 +476,12 @@
     },
 
     findCharById: findCharById,
+
+    findCharsByLine: function(block_no, line_no, char_no) {
+      return data.chars.filter(function(box) {
+        return box.block_no === block_no && box.line_no === line_no && (!char_no || box.char_no === char_no);
+      });
+    },
 
     findBoxByPoint: function(pt) {
       var ret = null, dist = 1e5, d, i, el;
@@ -537,9 +573,6 @@
       var i, cur, chars, calc, invalid = 1e5;
       var minDist = invalid, d, ret;
 
-      if (state.scrolling.length > 1) {
-        return;
-      }
       chars = data.chars.filter(function(c) { return c.shape; });
       ret = cur = state.edit || state.hover || (chars[chars.length - 1] || {}).shape;
       cur = cur && cur.getBBox();
