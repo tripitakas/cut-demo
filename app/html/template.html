@@ -30,6 +30,7 @@
       <button class="btn btn-default" id="hl-flat">扁框<sup class="count"></sup></button>
       <button class="btn btn-default" id="hl-overlap">重叠<sup class="count"></sup></button>
     </div>
+    <button class="btn btn-default" id="export">导出</button>
   </div>
 </div>
 
@@ -48,10 +49,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.js"></script>
 <script src="../js/vendor/raphael.zoom.js"></script>
 <script src="../js/vendor/jquery.mapkey.js"></script>
+<script src="../js/vendor/download.js"></script>
 
-<script src="../js/cut.js?v=9261"></script>
-<script src="../js/cut_keys.js?v=9261"></script>
-<script src="../js/cut_adv.js?v=9261"></script>
+<script src="../js/cut.js?v=1014"></script>
+<script src="../js/cut_keys.js?v=1014"></script>
+<script src="../js/cut_adv.js?v=1014"></script>
 
 <script>
   $.getJSON('../data/GL_79_4_7.cut', function(json) {
@@ -113,6 +115,10 @@
     $('.hl-btn > button').click(function() {
       var type = this.getAttribute('id').replace(/^.*-/, '');
       $.cut.switchHighlightBoxes(type);
+    });
+    
+    $('#export').click(function() {
+      download(JSON.stringify($.cut.exportBoxes()), 'GL_79_4_7.json', 'text/plain');
     });
 
   });

@@ -451,6 +451,8 @@
             break;
           }
         }
+      } else {
+        info.changed = true;
       }
       dst.data('cid', info.char_id).data('char', dst.ch);
       info.shape = dst;
@@ -477,9 +479,9 @@
 
     findCharById: findCharById,
 
-    findCharsByLine: function(block_no, line_no, char_no) {
+    findCharsByLine: function(block_no, line_no, cmp) {
       return data.chars.filter(function(box) {
-        return box.block_no === block_no && box.line_no === line_no && (!char_no || box.char_no === char_no);
+        return box.block_no === block_no && box.line_no === line_no && (!cmp || cmp(box.ch, box));
       });
     },
 
@@ -510,6 +512,18 @@
         }
       }
       return ret;
+    },
+
+    exportBoxes: function() {
+      var r = function(v) {
+        return Math.round(v * 10) / 10;
+      };
+      return data.chars.filter(function(c) { return c.shape; }).map(function(c) {
+        var box = c.shape.getBBox();
+        c = $.extend({}, c, {x: r(box.x), y: r(box.y), w: r(box.width), h: r(box.height)});
+        delete c.shape;
+        return c;
+      });
     },
 
     onBoxChanged: function(callback) {
