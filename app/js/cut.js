@@ -88,7 +88,7 @@
       return data.paper.rect(x, y, width, height)
         .initZoom().setAttr({
           stroke: rgb_a(data.changedColor, data.boxOpacity),
-          'stroke-width': 1.5,
+          'stroke-width': 1.5 * (data.blockMode ? 10 : 1)
           // fill: rgb_a(data.hoverFill, .15)
         });
     }
@@ -125,6 +125,7 @@
     handleSize: 1.7,                          // 字框控制点的半宽
     boxFill: 'rgba(0, 0, 0, .01)',            // 默认的字框填充色，不能全透明
     boxOpacity: 0.7,                          // 字框线半透明度
+    activeFillOpacity: 0.4,                   // 略过或当期字框的填充半透明度
     ratio: 1,                                 // 缩放比例
     unit: 5,                                  // 微调量
     paper: null,                              // Raphael 画布
@@ -156,7 +157,7 @@
 
     showHandles: function(el, handle) {
       var i, pt, r;
-      var size = data.handleSize * ((data.ratio - 1) * 0.4 + 1);
+      var size = data.handleSize * ((data.ratio - 1) * 0.4 + 1) * (data.blockMode ? 3 : 1);
 
       for (i = 0; i < handle.handles.length; i++) {
         handle.handles[i].remove();
@@ -169,7 +170,9 @@
           r = data.paper.rect(pt.x - size, pt.y - size, size * 2, size * 2)
             .attr({
               stroke: i === handle.index ? data.activeHandleColor : data.hoverColor,
-              fill: i === handle.index ? rgb_a(data.activeHandleFill, 0.8) : rgb_a(data.handleFill, 0.4)
+              fill: i === handle.index ? rgb_a(data.activeHandleFill, 0.8) :
+                  rgb_a(data.handleFill, data.activeFillOpacity),
+              'stroke-width': (data.blockMode ? 2 : 1)
             });
           handle.handles.push(r);
         }
@@ -284,7 +287,7 @@
         state.editHandle.fill = el.attr('fill');
         el.attr({
           stroke: rgb_a(data.changedColor, data.boxOpacity),
-          fill: rgb_a(data.hoverFill, 0.4)
+          fill: rgb_a(data.hoverFill, data.activeFillOpacity)
         });
         $(el.node).toggle(true);
         this.scrollToVisible(el);
@@ -396,6 +399,13 @@
         .attr({'stroke': 'transparent', fill: data.boxFill});
 
       state.readonly = p.readonly;
+      data.blockMode = p.blockMode;
+      if (p.blockMode) {
+        data.activeFillOpacity = 0.2;
+        setTimeout(function () {
+          self.setRatio(1);
+        }, 0);
+      }
       data.scrollContainer = p.scrollContainer && $(p.scrollContainer);
       if (!p.readonly) {
         $(data.holder)
@@ -408,14 +418,17 @@
 
       var xMin = 1e5, yMin= 1e5, leftTop = null;
 
-      p.chars.forEach(function(b) {
+      p.chars.forEach(function(b, idx) {
         if (b.block_no && b.line_no && b.char_no) {
           b.char_id = (b.block_no * 1000 + b.line_no) + 'n' + (b.char_no > 9 ? b.char_no : '0' + b.char_no);
+        }
+        if (!b.char_id) {
+          b.char_id = 'org' + idx;
         }
         b.shape = data.paper.rect(b.x, b.y, b.w, b.h)
           .attr({
             stroke: rgb_a(data.normalColor, data.boxOpacity),
-            'stroke-width': 1.5,
+            'stroke-width': 1.5 * (data.blockMode ? 10 : 1)
             // fill: data.boxFill
           })
           .data('cid', b.char_id)
@@ -516,7 +529,7 @@
 
     exportBoxes: function() {
       var r = function(v) {
-        return Math.round(v * 10) / 10;
+        return Math.round(v * 10 / data.ratio) / 10;
       };
       return data.chars.filter(function(c) { return c.shape; }).map(function(c) {
         var box = c.shape.getBBox();
@@ -704,9 +717,9 @@
       this.hoverOut(state.hover);
       this.hoverOut(state.edit);
 
-      data.ratio = ratio;
-      data.paper.setZoom(ratio);
-      data.paper.setSize(data.width * ratio, data.height * ratio);
+      data.ratio = ratio / (data.blockMode ? 5 : 1);
+      data.paper.setZoom(data.ratio);
+      data.paper.setSize(data.width * data.ratio, data.height * data.ratio);
 
       this.switchCurrentBox(el);
 
