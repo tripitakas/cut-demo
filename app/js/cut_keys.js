@@ -155,11 +155,11 @@
         self.switchHighlightBoxes('overlap');
       });
 
-      // insert/ctrl+n 增加字框
+      // insert/n 增加字框
       on('insert', function() {
         self.addBox();
       });
-      on('ctrl+n', function() {
+      on('n', function() {
         self.addBox();
       });
     },
