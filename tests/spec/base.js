@@ -13,6 +13,7 @@ $.cut.test = {
     expect(cut_data).toBeDefined();
 
     var data = $.cut.create({
+      name: name,
       width: width,
       height: height,
       holder: 'holder',

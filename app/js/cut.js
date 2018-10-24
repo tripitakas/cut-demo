@@ -525,10 +525,6 @@
       }
 
       p.chars.forEach(function(b, idx) {
-        if (p.removeSmallBoxes && (b.w < meanWidth / 3 && b.h < meanHeight / 3
-            || b.w < meanWidth / 8 || b.h < meanHeight / 8)) {
-          return;
-        }
         if (b.block_no && b.line_no && b.char_no) {
           b.char_id = (b.block_no * 1000 + b.line_no) + 'n' + (b.char_no > 9 ? b.char_no : '0' + b.char_no);
         }
@@ -539,6 +535,7 @@
       data.width = p.width;
       data.height = p.height;
       data.chars = p.chars;
+      data.removeSmall = p.removeSmallBoxes && [meanWidth, meanHeight];
       self._apply(p.chars, 1);
 
       p.chars.forEach(function(b) {
@@ -567,6 +564,11 @@
         }
       });
       chars.forEach(function(b) {
+        if (data.removeSmall && b.ch !== '一' && (
+            b.w < data.removeSmall[0] / 2 && b.h < data.removeSmall[1] / 2
+            || b.w < data.removeSmall[0] / 3 || b.h < data.removeSmall[1] / 3)) {
+          return;
+        }
         var c = self.findCharById(b.char_id);
         if (!c) {
           c = JSON.parse(JSON.stringify(b));
